@@ -1,4 +1,4 @@
-package GUI_Tests;
+package GUI_Tests.Utilities;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;

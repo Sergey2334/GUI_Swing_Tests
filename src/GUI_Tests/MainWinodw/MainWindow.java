@@ -1,4 +1,10 @@
-package GUI_Tests;
+package GUI_Tests.MainWinodw;
+
+import GUI_Tests.MainWinodw.MainWindowClientArea.MainWindowClientArea;
+import GUI_Tests.MainWinodw.MainWindowTitleBar.MainWindowTitleBar;
+import GUI_Tests.MainWinodw.MainWindowUtilities.WindowDragger;
+import GUI_Tests.MainWinodw.MainWindowUtilities.WindowGlassResizer;
+import GUI_Tests.Utilities.MyUtils;
 
 import javax.swing.*;
 import java.awt.*;

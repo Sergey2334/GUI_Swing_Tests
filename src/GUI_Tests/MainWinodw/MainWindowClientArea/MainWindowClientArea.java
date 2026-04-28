@@ -1,4 +1,6 @@
-package GUI_Tests;
+package GUI_Tests.MainWinodw.MainWindowClientArea;
+
+import GUI_Tests.Utilities.MyUtils;
 
 import javax.swing.*;
 

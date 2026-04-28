@@ -1,4 +1,6 @@
-package GUI_Tests;
+package GUI_Tests.MainWinodw.MainWindowTitleBar;
+
+import GUI_Tests.Utilities.MyUtils;
 
 import javax.swing.*;
 

@@ -1,4 +1,4 @@
-package GUI_Tests;
+package GUI_Tests.MainWinodw.MainWindowUtilities;
 
 import javax.swing.*;
 import java.awt.*;
