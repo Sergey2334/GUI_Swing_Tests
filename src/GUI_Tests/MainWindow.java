@@ -4,6 +4,8 @@ import javax.swing.*;
 import java.awt.*;
 
 public class MainWindow extends JFrame {
+    private final String name = "Main Window";
+
     private int windowBoundX;
     private int windowBoundY;
 
@@ -11,7 +13,6 @@ public class MainWindow extends JFrame {
     private int windowHeight;
 
 
-    private boolean isFullScreen;
     private MainWindowTitleBar mainWindowTitleBar;
     private MainWindowClientArea mainWindowClientArea;
 
@@ -26,6 +27,8 @@ public class MainWindow extends JFrame {
         this.windowBoundY = this.getBounds().y;
         this.windowWidth = this.getBounds().width;
         this.windowHeight = this.getBounds().height;
+
+        MyUtils.printSuccessfulInitiation(this.name);
     }
 
     private void initializeWindow(String title) {

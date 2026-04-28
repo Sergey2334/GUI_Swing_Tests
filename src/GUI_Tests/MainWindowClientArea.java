@@ -3,8 +3,11 @@ package GUI_Tests;
 import javax.swing.*;
 
 public class MainWindowClientArea extends JPanel {
+    private final String name = "Main Window Client Area";
+
     public MainWindowClientArea() {
         this.initialize();
+        MyUtils.printSuccessfulInitiation(this.name);
     }
 
     private void initialize() {

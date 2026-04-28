@@ -28,6 +28,15 @@ public final class MyUtils {
     public static final Color COLOR_TEST_GREEN = new Color(0x00FF00);
     public static final Color COLOR_TEST_BLUE = new Color(0x0000FF);
 
+    public static final String CONSOLE_RESET = "\u001B[0m";
+    public static final String CONSOLE_RED = "\u001B[31m";
+    public static final String CONSOLE_GREEN = "\u001B[32m";
+    public static final String CONSOLE_YELLOW = "\u001B[33m";
+    public static final String CONSOLE_BLUE = "\u001B[34m";
+    public static final String CONSOLE_PURPLE = "\u001B[35m";
+    public static final String CONSOLE_CYAN = "\u001B[36m";
+    public static final String EMOJI_GREEN_CHECK = "✅";
+
     public static final Border BORDER_TEST_RED = BorderFactory.createLineBorder(COLOR_TEST_RED, 3);
     public static final Border BORDER_TEST_GREEN = BorderFactory.createLineBorder(COLOR_TEST_GREEN, 3);
     public static final Border BORDER_TEST_BLUE = BorderFactory.createLineBorder(COLOR_TEST_BLUE, 3);
@@ -35,8 +44,12 @@ public final class MyUtils {
     public static final Font FONT_TRON1 = new Font("Agency FB", Font.BOLD, 24);
     public static final Font FONT_TRON2 = new Font("Ariel", Font.BOLD, 24);
 
-    public static final int WINDOW_MIN_WIDTH = 600;
-    public static final int WINDOW_MIN_HEIGHT = 300;
+//    public static final GraphicsConfiguration gc = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration();
+    private static final Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+    public static int userScreenWidth = (int) screenSize.getWidth();
+    public static int userScreenHeight = (int) screenSize.getHeight();
+    public static final int WINDOW_MIN_WIDTH = (int) (userScreenWidth / 2);
+    public static final int WINDOW_MIN_HEIGHT = (int) (userScreenHeight / 2);
 
     public static final int ROUNDED_CORNERS_RADIUS = 11;
 
@@ -57,7 +70,7 @@ public final class MyUtils {
                 BufferedImage originalImage = ImageIO.read(iconURL);
                 Image scaledImage = originalImage.getScaledInstance(24, 24, Image.SCALE_SMOOTH); // 24px Looks the best
                 titleBarTitleText.setIcon(new ImageIcon(scaledImage));
-                System.out.println("Title Bar Icon - ✅");
+                MyUtils.printSuccessfulInitiation("Title Bar Icon");
             } catch (IOException e) {
                 System.err.println("Error loading image: " + path);
                 e.printStackTrace();
@@ -76,7 +89,7 @@ public final class MyUtils {
         if (iconURL != null) {
             ImageIcon icon = new ImageIcon(iconURL);
             window.setIconImage(icon.getImage());
-            System.out.println("Window Icon - ✅");
+            MyUtils.printSuccessfulInitiation("Window Icon");
         } else {
             System.err.println("WindowIcon NOT FOUND: " + path);
         }
@@ -91,6 +104,17 @@ public final class MyUtils {
             }
         });
     }
+
+    public static void printWithColor(String text, String color)
+    {
+        System.out.println(color + text + MyUtils.CONSOLE_RESET);
+    }
+
+    public static void printSuccessfulInitiation(String componentName)
+    {
+        printWithColor(componentName + " - " + MyUtils.EMOJI_GREEN_CHECK, MyUtils.CONSOLE_GREEN);
+    }
+
 
     //---------------- Window Buttons Functions ----------------
     public static void minimizeWindow(JFrame window) {

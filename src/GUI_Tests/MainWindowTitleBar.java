@@ -4,13 +4,14 @@ import javax.swing.*;
 import java.awt.*;
 
 public class MainWindowTitleBar extends JPanel {
-
+    private final String name = "Main Window Title Bar";
     private TitleBarWindowTitle titleBarWindowTitle;
     private TitleBarWindowControls titleBarWindowControls;
 
 
     public MainWindowTitleBar(String windowTitle) {
         this.initialize(windowTitle);
+        MyUtils.printSuccessfulInitiation(this.name);
     }
 
     private void initialize(String windowTitle) {
