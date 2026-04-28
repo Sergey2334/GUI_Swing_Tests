@@ -12,14 +12,14 @@ public class MainWindowClientArea extends JPanel {
 //        this.setBorder(MyUtils.BORDER_TEST_RED);
 //        this.setForeground(MyUtils.COLOR_TEST_BLUE);
 
-        this.setBackground(MyUtils.COLOR_TRANSPARENT);
-
         this.setSize(MyUtils.WINDOW_MIN_WIDTH, MyUtils.WINDOW_MIN_HEIGHT);
+        this.setBackground(MyUtils.COLOR_BLACK1);
+        this.setOpaque(true);
+
 
         JButton b = new JButton("Client Area Button");
         this.add(b);
 
-        this.setOpaque(false);
         this.setVisible(true);
     }
 }

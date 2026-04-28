@@ -91,7 +91,7 @@ public class WindowGlassResizer extends JComponent {
         if (direction == Cursor.W_RESIZE_CURSOR || direction == Cursor.NW_RESIZE_CURSOR || direction == Cursor.SW_RESIZE_CURSOR) { b.x += dx; b.width -= dx; }
         if (direction == Cursor.N_RESIZE_CURSOR || direction == Cursor.NW_RESIZE_CURSOR || direction == Cursor.NE_RESIZE_CURSOR) { b.y += dy; b.height -= dy; }
 
-        if (b.width > 300 && b.height > 200) frame.setBounds(b);
+        if (b.width > MyUtils.WINDOW_MIN_WIDTH && b.height > MyUtils.WINDOW_MIN_HEIGHT) frame.setBounds(b);
     }
 
     // This is the secret sauce:

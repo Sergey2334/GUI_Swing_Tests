@@ -5,5 +5,7 @@ public class Main {
         System.out.println("Hello World! :D");
 
         MainWindow mainWindow = new MainWindow("TRON!");
+
+        //TEST
     }
 }

@@ -29,8 +29,8 @@ public class TitleBarWindowControls extends JPanel {
         this.setLayout(new FlowLayout());
 
         // TEST
-//        this.setBorder(MyUtils.BORDER_TEST_RED);
         this.setBackground(MyUtils.COLOR_TRANSPARENT);
+//        this.setBorder(MyUtils.BORDER_TEST_RED);
 //        this.setForeground(MyUtils.COLOR_TEST_BLUE);
 
         this.add(minimizeButton);

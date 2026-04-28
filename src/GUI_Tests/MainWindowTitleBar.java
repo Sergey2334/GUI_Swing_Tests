@@ -17,16 +17,17 @@ public class MainWindowTitleBar extends JPanel {
         this.setLayout(new BorderLayout());
         MyUtils.addDoubleClickOnTitleBarForFullScreen(this);
 
-        // TEST
-//        this.setBorder(MyUtils.BORDER_TEST_BLUE);
-        this.setBackground(MyUtils.COLOR_BLACK1);
-
         this.titleBarWindowTitle = new TitleBarWindowTitle(windowTitle);
         this.titleBarWindowControls = new TitleBarWindowControls();
         this.add(titleBarWindowTitle, BorderLayout.WEST);
         this.add(titleBarWindowControls, BorderLayout.EAST);
 
-        this.setOpaque(false);
+        // TEST
+        this.setOpaque(true);
+        this.setBackground(MyUtils.COLOR_BLACK1_TRANSPARENT2);
+//        this.setBorder(MyUtils.BORDER_TEST_BLUE);
+
+
         this.setVisible(true);
     }
 }

@@ -30,21 +30,21 @@ public class MainWindow extends JFrame {
 
     private void initializeWindow(String title) {
         this.setUndecorated(true);
-        this.setLocationRelativeTo(null);
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setResizable(false);
         this.setLayout(new BorderLayout());
 
-        // TEST
         this.setMinimumSize(new Dimension(MyUtils.WINDOW_MIN_WIDTH, MyUtils.WINDOW_MIN_HEIGHT));
         MyUtils.applyRoundedCorners(this, MyUtils.ROUNDED_CORNERS_RADIUS);
+        this.setLocationRelativeTo(null);
 
-        this.setBackground(MyUtils.COLOR_GRAY1_TRANSPARENT); // Does Background, but ContentPane is on Top, unless Transparent
-//        this.getContentPane().setBackground(MyUtils.COLOR_TEST_BLUE); // If JFrame Background is Transparent , then this won't matter
+        this.setBackground(MyUtils.COLOR_TRANSPARENT); // Does Background, but ContentPane is on Top, unless Transparent
+        this.getContentPane().setBackground(MyUtils.COLOR_TRANSPARENT); // If JFrame Background is Transparent , then this won't matter
 
         this.setName(title);
         this.setTitle(title);
         MyUtils.setWindowIcon(this);
+
 
         this.mainWindowTitleBar = new MainWindowTitleBar(title);
         this.mainWindowClientArea = new MainWindowClientArea();
@@ -66,6 +66,7 @@ public class MainWindow extends JFrame {
         });
         this.add(b1, BorderLayout.EAST);
 
+
         this.pack();
         this.setVisible(true);
     }
@@ -82,10 +83,12 @@ public class MainWindow extends JFrame {
         glassResizer.setVisible(true);
     }
 
+    // TEST
     private void printClicked(String text) {
         System.out.println(text);
     }
 
+    // TEST
     private void setNewWindowSizeTEST() {
         this.windowBoundX = this.getBounds().x;
         this.windowBoundY = this.getBounds().y;

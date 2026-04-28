@@ -21,6 +21,7 @@ public final class MyUtils {
     public static final Color COLOR_GRAY1_TRANSPARENT = new Color(100, 100, 100, 80);
     public static final Color COLOR_BLACK1 = new Color(25, 25, 25, 255);
     public static final Color COLOR_BLACK1_TRANSPARENT = new Color(25, 25, 25, 80);
+    public static final Color COLOR_BLACK1_TRANSPARENT2 = new Color(25, 25, 25, 180);
 
 
     public static final Color COLOR_TEST_RED = new Color(0xFF0000);
