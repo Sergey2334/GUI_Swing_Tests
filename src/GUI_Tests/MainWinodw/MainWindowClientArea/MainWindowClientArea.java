@@ -9,7 +9,7 @@ public class MainWindowClientArea extends JPanel {
 
     public MainWindowClientArea() {
         this.initialize();
-        MyUtils.printSuccessfulInitiation(this.name);
+        MyUtils.printSuccessfulInitialization(this.name);
     }
 
     private void initialize() {

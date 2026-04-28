@@ -13,7 +13,7 @@ public class MainWindowTitleBar extends JPanel {
 
     public MainWindowTitleBar(String windowTitle) {
         this.initialize(windowTitle);
-        MyUtils.printSuccessfulInitiation(this.name);
+        MyUtils.printSuccessfulInitialization(this.name);
     }
 
     private void initialize(String windowTitle) {

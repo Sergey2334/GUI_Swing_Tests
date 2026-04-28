@@ -15,7 +15,7 @@ public class TitleBarWindowControls extends JPanel {
     private final TitleBarWindowControlsButton maximizeButton =
             new TitleBarWindowControlsButton(1, "\uD83D\uDDD6", e ->
             {
-                MyUtils.toggleMaximize2(Objects.requireNonNull(MyUtils.getWindow(this.maximizeButton)));
+                MyUtils.toggleMaximize(Objects.requireNonNull(MyUtils.getWindow(this.maximizeButton)));
             });
     private final TitleBarWindowControlsButton closeButton =
             new TitleBarWindowControlsButton(2, "X", e ->

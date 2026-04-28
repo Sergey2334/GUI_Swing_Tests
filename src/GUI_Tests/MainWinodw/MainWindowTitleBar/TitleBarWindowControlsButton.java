@@ -29,6 +29,9 @@ public class TitleBarWindowControlsButton extends JButton {
         this.setForeground(MyUtils.COLOR_TRON1);
 //        this.setBorder(MyUtils.BORDER_TEST_GREEN);
         this.setFont(MyUtils.FONT_TRON2);
+
+        MyUtils.addButtonHoverColorChangeEffect(this, MyUtils.COLOR_TRON2, MyUtils.COLOR_TRON1);
+
         this.setVisible(true);
     }
 }

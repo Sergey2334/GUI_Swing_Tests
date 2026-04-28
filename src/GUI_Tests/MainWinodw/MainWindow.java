@@ -18,6 +18,9 @@ public class MainWindow extends JFrame {
     private int windowWidth;
     private int windowHeight;
 
+    // TEST
+    private Rectangle windowOriginalBounds;
+
 
     private MainWindowTitleBar mainWindowTitleBar;
     private MainWindowClientArea mainWindowClientArea;
@@ -33,8 +36,9 @@ public class MainWindow extends JFrame {
         this.windowBoundY = this.getBounds().y;
         this.windowWidth = this.getBounds().width;
         this.windowHeight = this.getBounds().height;
+        this.windowOriginalBounds =  new Rectangle(this.windowBoundX, this.windowBoundY, this.windowWidth, this.windowHeight);
 
-        MyUtils.printSuccessfulInitiation(this.name);
+        MyUtils.printSuccessfulInitialization(this.name);
     }
 
     private void initializeWindow(String title) {
@@ -90,6 +94,20 @@ public class MainWindow extends JFrame {
         WindowGlassResizer glassResizer = new WindowGlassResizer(this);
         this.setGlassPane(glassResizer);
         glassResizer.setVisible(true);
+    }
+
+
+    // TEST
+    public int  getWindowBoundX() {
+        return this.windowBoundX;
+    }
+    // TEST
+    public int getWindowBoundY() {
+        return this.windowBoundY;
+    }
+    // TEST
+    public Rectangle getOriginalWindowBounds() {
+        return this.windowOriginalBounds;
     }
 
     // TEST
