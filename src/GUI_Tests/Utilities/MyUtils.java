@@ -1,5 +1,7 @@
 package GUI_Tests.Utilities;
 
+import GUI_Tests.Utilities.DialogBox.DialogBox;
+import GUI_Tests.Utilities.DialogBox.DialogBoxOption;
 import GUI_Tests.MainWinodw.MainWindowUtilities.WindowAnimations;
 
 import javax.imageio.ImageIO;
@@ -21,6 +23,7 @@ public final class MyUtils {
     public static final Color COLOR_BLACK1 = new Color(25, 25, 25, 255);
     public static final Color COLOR_BLACK1_TRANSPARENT = new Color(25, 25, 25, 80);
     public static final Color COLOR_BLACK1_TRANSPARENT2 = new Color(25, 25, 25, 180);
+    public static final Color COLOR_BLACK1_TRANSPARENT3 = new Color(25, 25, 25, 200);
 
 
     public static final Color COLOR_TEST_RED = new Color(0xFF0000);
@@ -51,6 +54,10 @@ public final class MyUtils {
     public static final int WINDOW_MIN_HEIGHT = (int) (userScreenHeight / 2);
 
     public static final int ROUNDED_CORNERS_RADIUS = 11;
+
+    public static final int DIALOG_BOX_NOTHING = -1;
+    public static final int DIALOG_BOX_EXIT = 1;
+    public static final int DIALOG_BOX_CANCEL = 0;
 
     private MyUtils() {
         throw new UnsupportedOperationException("Utility class cannot be instantiated");
@@ -119,13 +126,24 @@ public final class MyUtils {
     }
 
     public static void toggleMaximize(JFrame window) {
-        // TEST
         MyUtils.printWithColor("isMaximized - " + WindowAnimations.toggleMaximize(window), MyUtils.CONSOLE_BLUE);
-//        WindowAnimations.toggleMaximize(window);
     }
 
     public static void closeWindow(JFrame window) {
-        WindowAnimations.closeWindow(window);
+        int exitValue = MyUtils.getExitDialogBoxValue(window);
+        if (exitValue == MyUtils.DIALOG_BOX_EXIT)
+        {
+            WindowAnimations.closeWindow(window);
+        }
+    }
+
+    private static int getExitDialogBoxValue(JFrame window) {
+        DialogBoxOption dialogBoxOption1 = new DialogBoxOption(" Yes ", MyUtils.DIALOG_BOX_EXIT);
+        DialogBoxOption dialogBoxOption2 = new DialogBoxOption(" No ", MyUtils.DIALOG_BOX_CANCEL);
+        DialogBoxOption[] dialogBoxOptionsArray = {dialogBoxOption1, dialogBoxOption2};
+        DialogBox dialogBox = new DialogBox("Are You Sure You Want To Exit ?", dialogBoxOptionsArray, window);
+
+        return dialogBox.getSelectedValue();
     }
 
     public static JFrame getWindow(Component component) {
