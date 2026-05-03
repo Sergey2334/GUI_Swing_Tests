@@ -19,6 +19,7 @@ public final class MyUtils {
     public static final Color COLOR_TRON1 = new Color(0x18CAE6);
     public static final Color COLOR_TRON2 = new Color(0x7DFDFE);
     public static final Color COLOR_GRAY1 = new Color(100, 100, 100, 255);
+    public static final Color COLOR_GRAY2 = new Color(70, 70, 70, 255);
     public static final Color COLOR_GRAY1_TRANSPARENT = new Color(100, 100, 100, 80);
     public static final Color COLOR_BLACK1 = new Color(25, 25, 25, 255);
     public static final Color COLOR_BLACK1_TRANSPARENT = new Color(25, 25, 25, 80);
@@ -53,11 +54,25 @@ public final class MyUtils {
     public static final int WINDOW_MIN_WIDTH = (int) (userScreenWidth / 2);
     public static final int WINDOW_MIN_HEIGHT = (int) (userScreenHeight / 2);
 
+
     public static final int ROUNDED_CORNERS_RADIUS = 11;
 
     public static final int DIALOG_BOX_NOTHING = -1;
     public static final int DIALOG_BOX_EXIT = 1;
     public static final int DIALOG_BOX_CANCEL = 0;
+
+    public static final int GAME_FPS = 60;
+    public static final int GAME_MIN_WIDTH = 640;
+    public static final int GAME_MIN_HEIGHT = 360;
+    public static final int GAME_TILE_SIZE = 15;
+    public static final int PLAYER_TILE_SIZE = GAME_TILE_SIZE * 2;
+    public static final int GAME_SPEED_FAST = 10;
+    public static final int GAME_SPEED_MEDIUM = 5;
+    public static final int GAME_SPEED_SLOW = 2;
+    public static final int DIRECTION_UP = 90;
+    public static final int DIRECTION_LEFT = 180;
+    public static final int DIRECTION_DOWN = 270;
+    public static final int DIRECTION_RIGHT = 0;
 
     private MyUtils() {
         throw new UnsupportedOperationException("Utility class cannot be instantiated");
@@ -131,8 +146,7 @@ public final class MyUtils {
 
     public static void closeWindow(JFrame window) {
         int exitValue = MyUtils.getExitDialogBoxValue(window);
-        if (exitValue == MyUtils.DIALOG_BOX_EXIT)
-        {
+        if (exitValue == MyUtils.DIALOG_BOX_EXIT) {
             WindowAnimations.closeWindow(window);
         }
     }
@@ -186,4 +200,40 @@ public final class MyUtils {
         });
     }
     //---------------- Window Buttons Functions ----------------
+
+
+    //---------------- Game Launcher Functions ----------------
+
+    public static void drawGrid(Graphics2D g2, JPanel gameLauncher) {
+        g2.setColor(MyUtils.COLOR_GRAY1);
+
+        // If we Include a Border
+        Insets insets = gameLauncher.getInsets();
+        int xStart = insets.left;
+        int yStart = insets.top;
+
+        int usableWidth = gameLauncher.getWidth() - insets.left - insets.right;
+        int usableHeight = gameLauncher.getHeight() - insets.top - insets.bottom;
+
+        int tileSize = MyUtils.GAME_TILE_SIZE;
+        int cols = usableWidth / tileSize;
+        int rows = usableHeight / tileSize;
+
+        int offsetX = xStart + (usableWidth - (cols * tileSize)) / 2;
+        int offsetY = yStart + (usableHeight - (rows * tileSize)) / 2;
+
+        // Draw Vertical Lines
+        for (int i = 0; i <= cols; i++) {
+            int x = offsetX + (i * tileSize);
+            g2.drawLine(x, offsetY, x, offsetY + (rows * tileSize));
+        }
+
+        // Draw Horizontal Lines
+        for (int i = 0; i <= rows; i++) {
+            int y = offsetY + (i * tileSize);
+            g2.drawLine(offsetX, y, offsetX + (cols * tileSize), y);
+        }
+    }
+
+    //---------------- Game Launcher Functions ----------------
 }

@@ -1,8 +1,10 @@
 package GUI_Tests.MainWinodw.MainWindowClientArea;
 
+import GUI_Tests.GameLauncher;
 import GUI_Tests.Utilities.MyUtils;
 
 import javax.swing.*;
+import java.awt.*;
 
 public class MainWindowClientArea extends JPanel {
     private final String name = "Main Window Client Area";
@@ -14,16 +16,16 @@ public class MainWindowClientArea extends JPanel {
 
     private void initialize() {
         // TEST
-//        this.setBorder(MyUtils.BORDER_TEST_RED);
-//        this.setForeground(MyUtils.COLOR_TEST_BLUE);
-
-        this.setSize(MyUtils.WINDOW_MIN_WIDTH, MyUtils.WINDOW_MIN_HEIGHT);
+        this.setSize(MyUtils.GAME_MIN_WIDTH, MyUtils.GAME_MIN_HEIGHT);
         this.setBackground(MyUtils.COLOR_BLACK1);
+        this.setLayout(new BorderLayout());
         this.setOpaque(true);
 
+        // TEST
 
-        JButton b = new JButton("Client Area Button");
-        this.add(b);
+        GameLauncher gameLauncher = new GameLauncher();
+        this.add(gameLauncher, BorderLayout.CENTER);
+        gameLauncher.startGame();
 
         this.setVisible(true);
     }
