@@ -1,5 +1,6 @@
 package GUI_Tests.Utilities;
 
+import GUI_Tests.Player;
 import GUI_Tests.Utilities.DialogBox.DialogBox;
 import GUI_Tests.Utilities.DialogBox.DialogBoxOption;
 import GUI_Tests.MainWinodw.MainWindowUtilities.WindowAnimations;
@@ -47,7 +48,7 @@ public final class MyUtils {
     public static final Font FONT_TRON1 = new Font("Agency FB", Font.BOLD, 24);
     public static final Font FONT_TRON2 = new Font("Ariel", Font.BOLD, 24);
 
-    //    public static final GraphicsConfiguration gc = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration();
+    public static final GraphicsConfiguration gc = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration();
     private static final Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
     public static int userScreenWidth = (int) screenSize.getWidth();
     public static int userScreenHeight = (int) screenSize.getHeight();
@@ -66,6 +67,9 @@ public final class MyUtils {
     public static final int GAME_MIN_HEIGHT = 360;
     public static final int GAME_TILE_SIZE = 15;
     public static final int PLAYER_TILE_SIZE = GAME_TILE_SIZE * 2;
+    public static final int PLAYER_TRAIL_SIZE = GAME_TILE_SIZE / 2;
+    public static final long PLAYER_TRAIL_LIFETIME = 14 * 1000;
+    public static final int PLAYER_SAFE_SEGMENT = PLAYER_TILE_SIZE;
     public static final int GAME_SPEED_FAST = 10;
     public static final int GAME_SPEED_MEDIUM = 5;
     public static final int GAME_SPEED_SLOW = 2;
@@ -73,6 +77,7 @@ public final class MyUtils {
     public static final int DIRECTION_LEFT = 180;
     public static final int DIRECTION_DOWN = 270;
     public static final int DIRECTION_RIGHT = 0;
+    public static final int PLAYER_TURN_DELAY = 100;
 
     private MyUtils() {
         throw new UnsupportedOperationException("Utility class cannot be instantiated");
@@ -233,6 +238,13 @@ public final class MyUtils {
             int y = offsetY + (i * tileSize);
             g2.drawLine(offsetX, y, offsetX + (cols * tileSize), y);
         }
+    }
+
+    public static boolean isOutOfBounds(Player p, int w, int h) {
+        return p.getPlayerX() < 0 ||
+                p.getPlayerX() > w - MyUtils.PLAYER_TILE_SIZE ||
+                p.getPlayerY() < 0 ||
+                p.getPlayerY() > h - MyUtils.PLAYER_TILE_SIZE;
     }
 
     //---------------- Game Launcher Functions ----------------
