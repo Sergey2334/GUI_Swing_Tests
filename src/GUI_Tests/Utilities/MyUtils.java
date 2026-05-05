@@ -63,8 +63,8 @@ public final class MyUtils {
     public static final int DIALOG_BOX_CANCEL = 0;
 
     public static final int GAME_FPS = 60;
-    public static final int GAME_MIN_WIDTH = 640;
-    public static final int GAME_MIN_HEIGHT = 360;
+    public static final int GAME_MIN_WIDTH = 640 * 2;
+    public static final int GAME_MIN_HEIGHT = 360 * 2;
     public static final int GAME_TILE_SIZE = 15;
     public static final int PLAYER_TILE_SIZE = GAME_TILE_SIZE * 2;
     public static final int PLAYER_TRAIL_SIZE = GAME_TILE_SIZE / 2;
@@ -78,6 +78,8 @@ public final class MyUtils {
     public static final int DIRECTION_DOWN = 270;
     public static final int DIRECTION_RIGHT = 0;
     public static final int PLAYER_TURN_DELAY = 100;
+    public static final double GAME_ARENA_INSET = 0;
+    public static final double GAME_ARENA_INSET_SHRINK_SPEED = 0.03;
 
     private MyUtils() {
         throw new UnsupportedOperationException("Utility class cannot be instantiated");

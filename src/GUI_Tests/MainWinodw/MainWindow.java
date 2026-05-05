@@ -49,7 +49,6 @@ public class MainWindow extends JFrame {
 
         this.setMinimumSize(new Dimension(MyUtils.WINDOW_MIN_WIDTH, MyUtils.WINDOW_MIN_HEIGHT));
         MyUtils.applyRoundedCorners(this, MyUtils.ROUNDED_CORNERS_RADIUS);
-        this.setLocationRelativeTo(null);
 
         this.setBackground(MyUtils.COLOR_TRANSPARENT); // Does Background, but ContentPane is on Top, unless Transparent
         this.getContentPane().setBackground(MyUtils.COLOR_TRANSPARENT); // If JFrame Background is Transparent , then this won't matter
@@ -66,6 +65,7 @@ public class MainWindow extends JFrame {
 
 
         this.pack();
+        this.setLocationRelativeTo(null); // Important To Be Here Right Before setVisible(true) :D
         this.setVisible(true);
     }
 

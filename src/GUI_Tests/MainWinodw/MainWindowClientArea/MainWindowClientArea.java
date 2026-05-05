@@ -15,18 +15,15 @@ public class MainWindowClientArea extends JPanel {
     }
 
     private void initialize() {
-        // TEST
-        this.setSize(MyUtils.GAME_MIN_WIDTH, MyUtils.GAME_MIN_HEIGHT);
         this.setBackground(MyUtils.COLOR_BLACK1);
-        this.setLayout(new BorderLayout());
+        this.setLayout(new GridBagLayout()); // Use GridBag for perfect centering
         this.setOpaque(true);
 
-        // TEST
-
         GameLauncher gameLauncher = new GameLauncher();
-        this.add(gameLauncher, BorderLayout.CENTER);
-        gameLauncher.startGame();
+        // GridBagConstraints() with no arguments defaults to Center
+        this.add(gameLauncher, new GridBagConstraints());
 
+        gameLauncher.startGame();
         this.setVisible(true);
     }
 }

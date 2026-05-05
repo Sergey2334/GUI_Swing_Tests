@@ -18,27 +18,25 @@ public class GameLauncher extends JPanel implements Runnable {
     private int panelHeight;
     private Player player1;
     private Player player2;
+    private double arenaInset = MyUtils.GAME_ARENA_INSET;
+
 
     public GameLauncher() {
         this.initialize();
 
-        // TEST
-        int widthMiddle = MyUtils.WINDOW_MIN_WIDTH;
-        int heightMiddle = MyUtils.WINDOW_MIN_HEIGHT;
-        this.player1 = new Player(widthMiddle, heightMiddle - MyUtils.PLAYER_TILE_SIZE * 5, MyUtils.COLOR_TRON1, MyUtils.DIRECTION_DOWN, MyUtils.GAME_SPEED_MEDIUM);
-        this.player2 = new Player(widthMiddle, heightMiddle + MyUtils.PLAYER_TILE_SIZE * 5, MyUtils.COLOR_TRON2, MyUtils.DIRECTION_UP, MyUtils.GAME_SPEED_MEDIUM);
+        // Spawn relative to the GAME BOARD size, not the window size
+        int boardWidth = MyUtils.GAME_MIN_WIDTH;
+        int boardHeight = MyUtils.GAME_MIN_HEIGHT;
+
+        this.player1 = new Player(boardWidth / 2, boardHeight / 4, MyUtils.COLOR_TRON1, MyUtils.DIRECTION_DOWN, MyUtils.GAME_SPEED_MEDIUM);
+        this.player2 = new Player(boardWidth / 2, (boardHeight / 4) * 3, MyUtils.COLOR_TRON2, MyUtils.DIRECTION_UP, MyUtils.GAME_SPEED_MEDIUM);
     }
 
+
     private void initialize() {
-        this.setMinimumSize(new Dimension(MyUtils.GAME_MIN_WIDTH, MyUtils.GAME_MIN_HEIGHT));
-        this.setLayout(null);
-        // TEST
-//        this.setBorder(BorderFactory.createLineBorder(MyUtils.COLOR_TEST_BLUE, 5));
-        this.panelWidth = this.getWidth();
-        this.panelHeight = this.getHeight();
-        this.gameGrid = new boolean[this.panelWidth][this.panelHeight];
+        this.setPreferredSize(new Dimension(MyUtils.GAME_MIN_WIDTH, MyUtils.GAME_MIN_HEIGHT));
+        this.setLayout(null); // Keep null for absolute player movement
         this.setBackground(MyUtils.COLOR_BLACK1);
-        this.setOpaque(true);
         this.setFocusable(true);
         this.setupInput();
 
@@ -78,21 +76,27 @@ public class GameLauncher extends JPanel implements Runnable {
         player1.move(this.getWidth(), this.getHeight());
         player2.move(this.getWidth(), this.getHeight());
 
-        if (player1.getPlayerX() < 0 || player1.getPlayerX() > this.getWidth() - MyUtils.PLAYER_TILE_SIZE ||
-                player1.getPlayerY() < 0 || player1.getPlayerY() > this.getHeight() - MyUtils.PLAYER_TILE_SIZE) {
 
-            System.out.println("Player 1 hit the border!");
-            System.out.println("Player 2 Wins! (P1 hit the wall)");
-            return; // Stop processing further logic this frame
+        int w = this.getWidth();
+        int h = this.getHeight();
+
+        double leftWall = arenaInset;
+        double rightWall = w - arenaInset - MyUtils.PLAYER_TILE_SIZE;
+        double topWall = arenaInset;
+        double bottomWall = h - arenaInset - MyUtils.PLAYER_TILE_SIZE;
+
+        this.arenaInset += MyUtils.GAME_ARENA_INSET_SHRINK_SPEED;
+
+        // Player 1 Hits Wall
+        if (player1.getPlayerX() < leftWall || player1.getPlayerX() > rightWall ||
+                player1.getPlayerY() < topWall || player1.getPlayerY() > bottomWall) {
+            System.out.println("P1 Crushed by the Arena!");
         }
 
-        // 2. Check Player 2 Border Collision
-        if (player2.getPlayerX() < 0 || player2.getPlayerX() > this.getWidth() - MyUtils.PLAYER_TILE_SIZE ||
-                player2.getPlayerY() < 0 || player2.getPlayerY() > this.getHeight() - MyUtils.PLAYER_TILE_SIZE) {
-
-            System.out.println("Player 2 hit the border!");
-            System.out.println("Player 1 Wins! (P2 hit the wall)");
-            return;
+        // Player 2 Hits Wall
+        if (player2.getPlayerX() < leftWall || player2.getPlayerX() > rightWall ||
+                player2.getPlayerY() < topWall || player2.getPlayerY() > bottomWall) {
+            System.out.println("P2 Crushed by the Arena!");
         }
 
         // Player 1 checks if they hit their own trail OR Player 2's trail
@@ -112,6 +116,8 @@ public class GameLauncher extends JPanel implements Runnable {
 //        System.out.println(player1 + "\t" + player2);
     }
 
+    // TEST
+    int opacity = 0;
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
@@ -119,13 +125,19 @@ public class GameLauncher extends JPanel implements Runnable {
         // This makes the lines smooth and "high def"
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON); // Google Suggestion :D
 
-
-        // TEST - Draw Border
+        // TEST - Draw Grid
         MyUtils.drawGrid(g2, this);
-        g2.setColor(MyUtils.COLOR_TEST_BLUE);
+        // TEST - Draw Border
+        g2.setColor(new Color(255, 0, 0, Math.min(this.opacity++, 255))); // Semi-transparent red
         g2.setStroke(new BasicStroke(5));
+        // Draw the rectangle representing the safe zone
+        int safeX = (int) this.arenaInset;
+        int safeY = (int) this.arenaInset;
+        int safeW = (int) (this.getWidth() - (arenaInset * 2));
+        int safeH = (int) (this.getHeight() - (arenaInset * 2));
+
+        g2.drawRect(safeX, safeY, safeW, safeH);
         // TEST - Draw Players
-        g2.drawRect(0, 0, getWidth(), getHeight());
         player1.draw(g2);
         player2.draw(g2);
     }
