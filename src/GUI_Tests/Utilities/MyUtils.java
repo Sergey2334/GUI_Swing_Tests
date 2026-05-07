@@ -18,10 +18,13 @@ import java.net.URL;
 public final class MyUtils {
     public static final Color COLOR_TRANSPARENT = new Color(0, 0, 0, 0);
     public static final Color COLOR_TRON1 = new Color(0x18CAE6);
+    public static final Color COLOR_TRON1_TRANSPARENT = transparentColor(MyUtils.COLOR_TRON1, 80);
     public static final Color COLOR_TRON2 = new Color(0x7DFDFE);
+    public static final Color COLOR_TRON2_TRANSPARENT = transparentColor(MyUtils.COLOR_TRON2, 80);
     public static final Color COLOR_GRAY1 = new Color(100, 100, 100, 255);
-    public static final Color COLOR_GRAY2 = new Color(70, 70, 70, 255);
     public static final Color COLOR_GRAY1_TRANSPARENT = new Color(100, 100, 100, 80);
+    public static final Color COLOR_GRAY2 = new Color(70, 70, 70, 255);
+    public static final Color COLOR_GRAY2_TRANSPARENT = new Color(70, 70, 70, 80);
     public static final Color COLOR_BLACK1 = new Color(25, 25, 25, 255);
     public static final Color COLOR_BLACK1_TRANSPARENT = new Color(25, 25, 25, 80);
     public static final Color COLOR_BLACK1_TRANSPARENT2 = new Color(25, 25, 25, 180);
@@ -86,6 +89,17 @@ public final class MyUtils {
     }
 
     // FUNCTIONS
+
+    private static Color transparentColor(Color color, int alphaValue) {
+        int hexColor = color.getRGB();
+        int alpha = alphaValue;
+
+        int r = (hexColor >> 16) & 0xFF;
+        int g = (hexColor >> 8) & 0xFF;
+        int b = (hexColor >> 0) & 0xFF;
+
+        return new Color(r, g, b, alpha);
+    }
 
     /* !!!-MAY CAUSE ERRORS IF SWITCHING PATHS-!!! */
     public static void setTitleBarTextIcon(JLabel titleBarTitleText) {
@@ -212,7 +226,7 @@ public final class MyUtils {
     //---------------- Game Launcher Functions ----------------
 
     public static void drawGrid(Graphics2D g2, JPanel gameLauncher) {
-        g2.setColor(MyUtils.COLOR_GRAY1);
+        g2.setColor(MyUtils.COLOR_GRAY2_TRANSPARENT);
 
         // If we Include a Border
         Insets insets = gameLauncher.getInsets();
@@ -240,6 +254,11 @@ public final class MyUtils {
             int y = offsetY + (i * tileSize);
             g2.drawLine(offsetX, y, offsetX + (cols * tileSize), y);
         }
+    }
+
+    public static void drawCenterPoint(Graphics2D g2, JPanel gameLauncher) {
+        g2.setColor(MyUtils.COLOR_TEST_RED);
+        g2.fillOval(gameLauncher.getWidth() / 2, gameLauncher.getHeight() / 2, 10, 10);
     }
 
     public static boolean isOutOfBounds(Player p, int w, int h) {
