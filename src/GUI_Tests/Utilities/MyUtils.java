@@ -1,5 +1,6 @@
 package GUI_Tests.Utilities;
 
+import GUI_Tests.GameSettings;
 import GUI_Tests.Player;
 import GUI_Tests.Utilities.DialogBox.DialogBox;
 import GUI_Tests.Utilities.DialogBox.DialogBoxOption;
@@ -55,19 +56,21 @@ public final class MyUtils {
     private static final Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
     public static int userScreenWidth = (int) screenSize.getWidth();
     public static int userScreenHeight = (int) screenSize.getHeight();
-    public static final int WINDOW_MIN_WIDTH = (int) (userScreenWidth / 2);
-    public static final int WINDOW_MIN_HEIGHT = (int) (userScreenHeight / 2);
+    public static final int WINDOW_MIN_WIDTH = userScreenWidth / 2;
+    public static final int WINDOW_MIN_HEIGHT = userScreenHeight / 2;
 
 
     public static final int ROUNDED_CORNERS_RADIUS = 11;
+    public static final int ROUNDED_CORNERS_RADIUS_DIALOG_BOX = 35;
+
 
     public static final int DIALOG_BOX_NOTHING = -1;
     public static final int DIALOG_BOX_EXIT = 1;
     public static final int DIALOG_BOX_CANCEL = 0;
 
     public static final int GAME_FPS = 60;
-    public static final int GAME_MIN_WIDTH = 640 * 2;
-    public static final int GAME_MIN_HEIGHT = 360 * 2;
+    public static final int GAME_MIN_WIDTH = 1280;
+    public static final int GAME_MIN_HEIGHT = 720;
     public static final int GAME_TILE_SIZE = 15;
     public static final int PLAYER_TILE_SIZE = GAME_TILE_SIZE * 2;
     public static final int PLAYER_TRAIL_SIZE = GAME_TILE_SIZE / 2;
@@ -84,6 +87,14 @@ public final class MyUtils {
     public static final double GAME_ARENA_INSET = 0;
     public static final double GAME_ARENA_INSET_SHRINK_SPEED = 0.03;
     public static final int PLAYER_WIN_SCORE = 2;
+    public static final Color[] TRON_COLORS = {
+            new Color(0, 255, 255),   // Cyan
+            new Color(255, 0, 255),   // Pink
+            new Color(50, 255, 50),   // Green
+            new Color(255, 150, 0),   // Orange
+            new Color(255, 255, 255)  // White
+    };
+
 
     private MyUtils() {
         throw new UnsupportedOperationException("Utility class cannot be instantiated");
@@ -146,6 +157,12 @@ public final class MyUtils {
                         0, 0, frame.getWidth(), frame.getHeight(), radius, radius));
             }
         });
+    }
+
+    public static void applyRoundedCornersDialogBox(Window window, int radius) {
+        window.setShape(new java.awt.geom.RoundRectangle2D.Double(
+                0, 0, window.getWidth(), window.getHeight(), radius, radius
+        ));
     }
 
     public static void printWithColor(String text, String color) {
@@ -293,6 +310,34 @@ public final class MyUtils {
         g2.setColor(new Color(1f, 1f, 1f, alpha));
         g2.drawString("PRESS E TO BEGIN", centerX - 100, gameLauncher.getHeight() / 2 + 100);
     }
+
+    public static void drawSettingsScreen(Graphics2D g2, JPanel panel, int diff, int p1C, int p2C) {
+        g2.setColor(new Color(0, 0, 0, 230));
+        g2.fillRect(0, 0, panel.getWidth(), panel.getHeight());
+
+        g2.setFont(new Font("Agency FB", Font.BOLD, 60));
+        g2.setColor(Color.WHITE);
+        g2.drawString("MATCH CONFIGURATION", 50, 80);
+
+        // Show Difficulty
+        String[] diffNames = {"EASY", "MEDIUM", "HARD"};
+        g2.setFont(new Font("Monospaced", Font.BOLD, 25));
+        g2.setColor(Color.GRAY);
+        g2.drawString("DIFFICULTY: [1-3] " + diffNames[diff], 50, 180);
+
+        // Show Color Selection
+        g2.setColor(MyUtils.TRON_COLORS[p1C]);
+        g2.drawString("P1 COLOR: [Q] TO CYCLE", 50, 250);
+
+        g2.setColor(MyUtils.TRON_COLORS[p2C]);
+        g2.drawString("P2 COLOR: [E] TO CYCLE", 50, 320);
+
+        // Start Instruction
+        float pulse = (float)(Math.sin(System.currentTimeMillis()*0.01)*0.5+0.5);
+        g2.setColor(new Color(1f,1f,1f, pulse));
+        g2.drawString("PRESS SPACE TO INITIATE", 50, 450);
+    }
+
 
     public static void drawWinScreen(Graphics2D g2, JPanel gameLauncher, String winnerName, Color winnerColor, float logoHue) {
         // Dim the background

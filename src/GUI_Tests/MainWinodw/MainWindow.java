@@ -8,6 +8,8 @@ import GUI_Tests.Utilities.MyUtils;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 
 public class MainWindow extends JFrame {
     private final String name = "Main Window";
@@ -50,19 +52,19 @@ public class MainWindow extends JFrame {
         this.setMinimumSize(new Dimension(MyUtils.WINDOW_MIN_WIDTH, MyUtils.WINDOW_MIN_HEIGHT));
         MyUtils.applyRoundedCorners(this, MyUtils.ROUNDED_CORNERS_RADIUS);
 
-        this.setBackground(MyUtils.COLOR_TRANSPARENT); // Does Background, but ContentPane is on Top, unless Transparent
-        this.getContentPane().setBackground(MyUtils.COLOR_TRANSPARENT); // If JFrame Background is Transparent , then this won't matter
+//        this.setBackground(MyUtils.COLOR_TRANSPARENT); // Does Background, but ContentPane is on Top, unless Transparent
+        this.setBackground(MyUtils.COLOR_BLACK1); // TEST - Fixed The Flickering, But No Transparent Background
+        this.getContentPane().setBackground(MyUtils.COLOR_BLACK1); // If JFrame Background is Transparent , then this won't matter
+//        this.setIgnoreRepaint(true);// TEST - Should Fix Flickering
 
         this.setName(title);
         this.setTitle(title);
         MyUtils.setWindowIcon(this);
 
-
         this.mainWindowTitleBar = new MainWindowTitleBar(title);
         this.mainWindowClientArea = new MainWindowClientArea();
         this.add(this.mainWindowTitleBar, BorderLayout.NORTH);
         this.add(this.mainWindowClientArea, BorderLayout.CENTER);
-
 
         this.pack();
         this.setLocationRelativeTo(null); // Important To Be Here Right Before setVisible(true) :D

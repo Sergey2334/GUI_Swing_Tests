@@ -33,15 +33,22 @@ public class GameLauncher extends JPanel implements Runnable {
     private Timer shakeTimer;
     private float logoHue = 0.0f;
 
-    private enum State {MENU, PLAYING, WIN}
+    private enum State { MENU, SETTINGS, PLAYING, WIN }
     private State currentState = State.MENU;
+    private GameSettings currentSettings = new GameSettings();
+    private int currentLivesP1, currentLivesP2;
+    private int currentMoveSpeed;
+    private long currentTrailLife;
+    private double currentShrinkSpeed;
+    // To track the selection in the menu
+    private int selectedDifficulty = 1; // 0=Easy, 1=Med, 2=Hard
+
 
 
     public GameLauncher() {
         this.initialize();
         this.initializePlayers();
     }
-
 
     private void initialize() {
         this.setDoubleBuffered(true); // Should be on by default, but good to force
@@ -56,8 +63,13 @@ public class GameLauncher extends JPanel implements Runnable {
         this.setVisible(true);
     }
 
+    @Override
+    public boolean isOptimizedDrawingEnabled() {
+        return true; // Tells Swing children don't overlap, speeding up draws
+    }
+
     private void initializePlayers() {
-        int centerX = MyUtils.GAME_MIN_WIDTH / 2;
+        int centerX = MyUtils.GAME_MIN_WIDTH / 2; // TEST - Resize
         int p1Y = MyUtils.GAME_MIN_HEIGHT / 4;
         int p2Y = (MyUtils.GAME_MIN_HEIGHT / 4) * 3;
 
@@ -74,6 +86,34 @@ public class GameLauncher extends JPanel implements Runnable {
     private void togglePause() {
         this.isPaused = !this.isPaused || this.isCountingDown;
     }
+
+    private void applyDifficulty(int level) {
+        switch(level) {
+            case 0: // EASY
+                this.currentMoveSpeed = MyUtils.GAME_SPEED_SLOW;
+                this.currentLivesP1 = 7;
+                this.currentLivesP2 = 7;
+                this.currentTrailLife = 2000;
+                this.currentShrinkSpeed = 0.05;
+                break;
+            case 1: // MEDIUM
+                this.currentMoveSpeed = MyUtils.GAME_SPEED_MEDIUM;
+                this.currentLivesP1 = 5;
+                this.currentLivesP2 = 5;
+                this.currentTrailLife = 4000;
+                this.currentShrinkSpeed = 0.1;
+                break;
+            case 2: // HARD
+                this.currentMoveSpeed = MyUtils.GAME_SPEED_FAST;
+                this.currentLivesP1 = 3;
+                this.currentLivesP2 = 3;
+                this.currentTrailLife = 8000;
+                this.currentShrinkSpeed = 0.3;
+                break;
+        }
+    }
+
+
 
 //    public long getGameTime() {
 //        return this.gameTime;
@@ -155,6 +195,7 @@ public class GameLauncher extends JPanel implements Runnable {
                 update();
                 // Ensure the UI update happens on the correct thread
                 SwingUtilities.invokeLater(() -> repaint());
+                getParent().repaint(); // Repaints the "Control Room" ClientArea! // TEST - MainContentArea Background
                 delta--;
             }
         }
@@ -271,6 +312,7 @@ public class GameLauncher extends JPanel implements Runnable {
             g2.translate(offsetX, offsetY); // Shifts everything drawn after this!
         }
 
+        // TEST - Draw Main Menu or Win
         if (this.currentState == State.MENU) {
             MyUtils.drawMainMenu(g2, this, this.shakeMagnitude, this.logoHue);
         } else if (currentState == State.WIN) {
@@ -289,14 +331,40 @@ public class GameLauncher extends JPanel implements Runnable {
             MyUtils.drawGrid(g2, this);
             // TEST - Draw Center Point
             MyUtils.drawCenterPoint(g2, this);
+
             // TEST - Draw Border
-            g2.setColor(new Color(255, 0, 0, Math.min(this.opacity++ / 10, 255))); // Semi-transparent red
-            g2.setStroke(new BasicStroke(5));
-            int safeX = (int) this.arenaInset;
-            int safeY = (int) this.arenaInset;
-            int safeW = (int) (this.getWidth() - (arenaInset * 2));
-            int safeH = (int) (this.getHeight() - (arenaInset * 2));
-            g2.drawRect(safeX, safeY, safeW, safeH);
+//            g2.setColor(new Color(255, 0, 0, Math.min(this.opacity++ / 10, 255))); // Semi-transparent red
+//            g2.setStroke(new BasicStroke(5));
+//            int safeX = (int) this.arenaInset;
+//            int safeY = (int) this.arenaInset;
+//            int safeW = (int) (this.getWidth() - (arenaInset * 2));
+//            int safeH = (int) (this.getHeight() - (arenaInset * 2));
+//            g2.drawRect(safeX, safeY, safeW, safeH);
+
+            // TEST - Draw Closing Void
+            // --- DRAW THE CLOSING VOID ---
+            // 1. Calculate the thickness of the "Void"
+            float wallThickness = (float) this.arenaInset;
+
+            if (wallThickness > 0) {
+                // 2. Create one single stroke that is the thickness of the inset
+                // We set CAP_BUTT to ensure corners are clean
+                g2.setStroke(new BasicStroke(wallThickness * 2, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER));
+
+                // 3. Use a SOLID color instead of transparent if the flickering is bad
+                // Solid colors are MUCH faster for the CPU to draw
+                g2.setColor(MyUtils.COLOR_BLACK1.brighter()); // A dark gray instead of transparent red
+
+                // 4. Draw a single rectangle that sits in the middle of the "Void" area
+                // Because the stroke is centered, it fills the area from the edge to the safe zone
+                g2.drawRect(0, 0, getWidth(), getHeight());
+
+                // 5. Draw one THIN neon line for the "Laser Fence"
+                g2.setStroke(new BasicStroke(5));
+                g2.setColor(Color.RED);
+                int inset = (int)this.arenaInset;
+                g2.drawRect(inset, inset, getWidth() - (inset * 2), getHeight() - (inset * 2));
+            }
 
             // TEST - Draw Players
             player1.draw(g2, this.gameTime);

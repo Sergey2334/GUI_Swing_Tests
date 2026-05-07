@@ -4,6 +4,7 @@ import GUI_Tests.Utilities.MyUtils;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 
 public class DialogBox extends JDialog {
     private String dialogBoxMessage;
@@ -28,6 +29,7 @@ public class DialogBox extends JDialog {
         this.setFocusable(true);
         this.setSize(MyUtils.WINDOW_MIN_WIDTH / 3, MyUtils.WINDOW_MIN_HEIGHT / 3);
         this.setLocationRelativeTo(parentFrame);
+        MyUtils.applyRoundedCornersDialogBox(this, MyUtils.ROUNDED_CORNERS_RADIUS_DIALOG_BOX);
 
         DialogBoxMessage dialogBoxMessage = new DialogBoxMessage(this.dialogBoxMessage);
         this.add(dialogBoxMessage, BorderLayout.NORTH);
@@ -36,7 +38,6 @@ public class DialogBox extends JDialog {
             JPanel dialogOptionsPanel = new JPanel();
             dialogOptionsPanel.setOpaque(true);
             dialogOptionsPanel.setBackground(MyUtils.COLOR_BLACK1_TRANSPARENT3);
-
 
             // TEST GridBagLayout :D
             dialogOptionsPanel.setLayout(new GridBagLayout());
@@ -53,13 +54,40 @@ public class DialogBox extends JDialog {
                 });
 
                 this.dialogBoxOptions[i].setVisible(true);
-
                 dialogOptionsPanel.add(this.dialogBoxOptions[i], c); // Has Margin for GridBagLayout
-
             }
+
             dialogOptionsPanel.setVisible(true);
             this.add(dialogOptionsPanel, BorderLayout.CENTER);
         }
+
+        // TEST - Add "Enter" and "ESC" For Quick Option Select
+        JRootPane rootPane = this.getRootPane();
+        rootPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(
+                KeyStroke.getKeyStroke("ENTER"), "confirmYes"
+        );
+        rootPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(
+                KeyStroke.getKeyStroke("ESCAPE"), "cancelNo"
+        );
+        rootPane.getActionMap().put("confirmYes", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                for (DialogBoxOption option : dialogBoxOptions) {
+                    if (option.getOptionValue() == MyUtils.DIALOG_BOX_EXIT) {
+                        selectedValue = MyUtils.DIALOG_BOX_EXIT;
+                        dispose();
+                        break;
+                    }
+                }
+            }
+        });
+        rootPane.getActionMap().put("cancelNo", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                selectedValue = MyUtils.DIALOG_BOX_CANCEL;
+                dispose();
+            }
+        });
 
         this.setVisible(true);
     }
