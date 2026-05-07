@@ -83,6 +83,7 @@ public final class MyUtils {
     public static final int PLAYER_TURN_DELAY = 100;
     public static final double GAME_ARENA_INSET = 0;
     public static final double GAME_ARENA_INSET_SHRINK_SPEED = 0.03;
+    public static final int PLAYER_WIN_SCORE = 2;
 
     private MyUtils() {
         throw new UnsupportedOperationException("Utility class cannot be instantiated");
@@ -259,6 +260,64 @@ public final class MyUtils {
     public static void drawCenterPoint(Graphics2D g2, JPanel gameLauncher) {
         g2.setColor(MyUtils.COLOR_TEST_RED);
         g2.fillOval(gameLauncher.getWidth() / 2, gameLauncher.getHeight() / 2, 10, 10);
+    }
+
+    public static void drawMainMenu(Graphics2D g2, JPanel gameLauncher, int shake, float hue) {
+        // Background overlay
+        g2.setColor(new Color(0, 0, 0, 200));
+        g2.fillRect(0, 0, gameLauncher.getWidth(), gameLauncher.getHeight());
+
+        // Create the rainbow color based on the hue
+        Color rainbowColor = Color.getHSBColor(hue, 0.8f, 1.0f); // 0.8f is saturation (vibrancy)
+
+        // --- LOGO ---
+        int centerX = gameLauncher.getWidth() / 2;
+        int centerY = gameLauncher.getHeight() / 3;
+        g2.setFont(new Font("Agency FB", Font.BOLD, 120));
+
+        // Draw Glow with the rainbow color
+        g2.setColor(new Color(rainbowColor.getRed(), rainbowColor.getGreen(), rainbowColor.getBlue(), 100));
+        g2.drawString("TRON", gameLauncher.getWidth() / 2 - 105, gameLauncher.getHeight() / 3 + 5);
+
+        // Draw Core
+        g2.setColor(Color.WHITE);
+        g2.drawString("TRON", gameLauncher.getWidth() / 2 - 110, gameLauncher.getHeight() / 3);
+
+        // --- INSTRUCTIONS ---
+        g2.setFont(new Font("Monospaced", Font.PLAIN, 20));
+        g2.setColor(Color.WHITE);
+        g2.drawString("P1: WASD  |  P2: ARROWS", centerX - 130, gameLauncher.getHeight() / 2);
+
+        // Pulsing "PRESS E"
+        float alpha = (float) (Math.sin(System.currentTimeMillis() * 0.005) * 0.5 + 0.5);
+        g2.setColor(new Color(1f, 1f, 1f, alpha));
+        g2.drawString("PRESS E TO BEGIN", centerX - 100, gameLauncher.getHeight() / 2 + 100);
+    }
+
+    public static void drawWinScreen(Graphics2D g2, JPanel gameLauncher, String winnerName, Color winnerColor, float logoHue) {
+        // Dim the background
+        g2.setColor(new Color(0, 0, 0, 200));
+        g2.fillRect(0, 0, gameLauncher.getWidth(), gameLauncher.getHeight());
+
+        // Pulsing logic for the text
+        float pulse = (float) (Math.sin(System.currentTimeMillis() * 0.005) * 0.05 + 1);
+
+        g2.setFont(new Font("Agency FB", Font.BOLD, (int)(100 * pulse)));
+        g2.setColor(winnerColor);
+
+        Color winRainbow = Color.getHSBColor(logoHue, 1.0f, 1.0f);
+        g2.setColor(winRainbow);
+
+        String text = winnerName + " VICTORIOUS";
+        FontMetrics fm = g2.getFontMetrics();
+        int x = (gameLauncher.getWidth() - fm.stringWidth(text)) / 2;
+        int y = gameLauncher.getHeight() / 2;
+
+        g2.drawString(text, x, y);
+
+        g2.setFont(new Font("Monospaced", Font.PLAIN, 20));
+        g2.setColor(Color.WHITE);
+        g2.drawString("PRESS ESC TO RETURN TO MENU", x + 30, y + 80);
     }
 
     public static boolean isOutOfBounds(Player p, int w, int h) {

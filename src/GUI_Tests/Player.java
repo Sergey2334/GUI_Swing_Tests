@@ -91,6 +91,17 @@ public class Player extends JPanel {
         this.isAlive = false;
     }
 
+    public void resetPlayerScore() {
+        this.playerScore = 0;
+    }
+
+    public void triggerFirework(int x, int y, Color c) {
+        // Don't clear sparks here, we want them to overlap!
+        for (int i = 0; i < 30; i++) {
+            this.sparks.add(new Spark(x, y, c));
+        }
+    }
+
 //    public void draw(Graphics2D g2, long currenGameTime) {
 //        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 //        long currentTime = currenGameTime;
@@ -382,9 +393,12 @@ public class Player extends JPanel {
         public void update() {
             x += vx;
             y += vy;
-            vx *= 0.98; // Add slight air friction
+
+            vy += 0.15; // NEW: Gravity pulls sparks down slightly
+            vx *= 0.98; // Friction
             vy *= 0.98;
-            life -= 0.02f; // Fade out slowly
+
+            life -= 0.015f; // Fade a bit slower for fireworks
         }
 
         public void draw(Graphics2D g2) {

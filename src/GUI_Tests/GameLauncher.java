@@ -31,6 +31,10 @@ public class GameLauncher extends JPanel implements Runnable {
     private long gameTime = 0;
     private int shakeMagnitude = 0;
     private Timer shakeTimer;
+    private float logoHue = 0.0f;
+
+    private enum State {MENU, PLAYING, WIN}
+    private State currentState = State.MENU;
 
 
     public GameLauncher() {
@@ -75,7 +79,7 @@ public class GameLauncher extends JPanel implements Runnable {
 //        return this.gameTime;
 //    }
 
-    private void restartGame() {
+    private void restartRound() {
         this.isPaused = true;
         this.isCountingDown = true;
         this.countdownVal = 3;
@@ -100,6 +104,14 @@ public class GameLauncher extends JPanel implements Runnable {
         timer.start();
     }
 
+    private void restartGame()
+    {
+        this.gameTime = 0;
+        this.player1.resetPlayerScore();
+        this.player2.resetPlayerScore();
+        this.restartRound();
+    }
+
     private void triggerDeathEffects() {
         this.shakeMagnitude = 15; // Starting shake strength
 
@@ -109,13 +121,12 @@ public class GameLauncher extends JPanel implements Runnable {
             this.shakeMagnitude -= 2; // Gradually reduce shake
             if (this.shakeMagnitude <= 0) {
                 this.shakeMagnitude = 0;
-                ((Timer)e.getSource()).stop();
+                ((Timer) e.getSource()).stop();
             }
             repaint();
         });
         this.shakeTimer.start();
     }
-
 
 
     @Override
@@ -150,9 +161,24 @@ public class GameLauncher extends JPanel implements Runnable {
     }
 
     private void update() {
-        if (this.isPaused) return;
+        logoHue += 0.005f; // Controls how fast the color changes
+        if (logoHue > 1.0f) logoHue = 0.0f;
+
+
+        // 2. FIREWORKS LOGIC (Run this even in WIN state!)
+        if (currentState == State.WIN) {
+            if (Math.random() > 0.90) { // Spawn fireworks
+                int rx = (int)(Math.random() * getWidth());
+                int ry = (int)(Math.random() * getHeight());
+                Color c = (Math.random() > 0.5) ? MyUtils.COLOR_TRON1 : MyUtils.COLOR_TRON2;
+                player1.triggerFirework(rx, ry, c);
+            }
+        }
+
+        if (this.currentState != State.PLAYING || this.isPaused) return;
+
+
         this.gameTime += (1000 / this.FPS);
-        System.out.println("GameTime: " + this.gameTime);
 
         int w = this.getWidth();
         int h = this.getHeight();
@@ -207,7 +233,27 @@ public class GameLauncher extends JPanel implements Runnable {
                 this.player1.addScore();
             }
 
-            this.restartGame();
+            // TEST - Win Logic :D
+            if (this.player1.getPlayerScore() >= MyUtils.PLAYER_WIN_SCORE || this.player2.getPlayerScore() >= MyUtils.PLAYER_WIN_SCORE) {
+                this.currentState = State.WIN;
+            } else {
+                this.restartRound();
+            }
+
+
+            if (currentState == State.WIN) {
+                // Occasionally spawn a firework (roughly every 20 frames)
+                if (Math.random() > 0.95) {
+                    int randomX = (int) (Math.random() * getWidth());
+                    int randomY = (int) (Math.random() * getHeight());
+
+                    // Pick a random player's color for the firework
+                    Color fireworkColor = (Math.random() > 0.5) ? MyUtils.COLOR_TRON1 : MyUtils.COLOR_TRON2;
+
+                    // You can use player1 or player2 as a "host" to trigger these
+                    player1.triggerFirework(randomX, randomY, fireworkColor);
+                }
+            }
         }
     }
 
@@ -225,58 +271,73 @@ public class GameLauncher extends JPanel implements Runnable {
             g2.translate(offsetX, offsetY); // Shifts everything drawn after this!
         }
 
-        // TEST - Draw Grid
-        MyUtils.drawGrid(g2, this);
-        // TEST - Draw Center Point
-        MyUtils.drawCenterPoint(g2, this);
-        // TEST - Draw Border
-        g2.setColor(new Color(255, 0, 0, Math.min(this.opacity++ / 10, 255))); // Semi-transparent red
-        g2.setStroke(new BasicStroke(5));
-        int safeX = (int) this.arenaInset;
-        int safeY = (int) this.arenaInset;
-        int safeW = (int) (this.getWidth() - (arenaInset * 2));
-        int safeH = (int) (this.getHeight() - (arenaInset * 2));
-        g2.drawRect(safeX, safeY, safeW, safeH);
+        if (this.currentState == State.MENU) {
+            MyUtils.drawMainMenu(g2, this, this.shakeMagnitude, this.logoHue);
+        } else if (currentState == State.WIN) {
+            // Draw the background elements
+            MyUtils.drawGrid(g2, this);
+            // Draw the fireworks (stored in player spark lists)
+            player1.draw(g2, this.gameTime);
+            player2.draw(g2, this.gameTime);
 
-        // TEST - Draw Players
-        player1.draw(g2, this.gameTime);
-        player2.draw(g2, this.gameTime);
+            String winner = (player1.getPlayerScore() >= MyUtils.PLAYER_WIN_SCORE) ? "PLAYER 1" : "PLAYER 2";
+            Color winColor = (player1.getPlayerScore() >= MyUtils.PLAYER_WIN_SCORE) ? MyUtils.COLOR_TRON1 : MyUtils.COLOR_TRON2;
+            MyUtils.drawWinScreen(g2, this, winner, winColor, this.logoHue);
 
-        // TEST - Draw Pause
-        if (this.isPaused) {
-            g2.setColor(new Color(0, 0, 0, 150)); // Darken the screen
-            g2.fillRect(0, 0, this.getWidth(), this.getHeight());
+        } else {
+            // TEST - Draw Grid
+            MyUtils.drawGrid(g2, this);
+            // TEST - Draw Center Point
+            MyUtils.drawCenterPoint(g2, this);
+            // TEST - Draw Border
+            g2.setColor(new Color(255, 0, 0, Math.min(this.opacity++ / 10, 255))); // Semi-transparent red
+            g2.setStroke(new BasicStroke(5));
+            int safeX = (int) this.arenaInset;
+            int safeY = (int) this.arenaInset;
+            int safeW = (int) (this.getWidth() - (arenaInset * 2));
+            int safeH = (int) (this.getHeight() - (arenaInset * 2));
+            g2.drawRect(safeX, safeY, safeW, safeH);
 
-            if (!this.isCountingDown) {
-                g2.setColor(MyUtils.COLOR_TRON1);
-                g2.setFont(new Font("Arial", Font.BOLD, 50));
-                g2.drawString("PAUSED", getWidth() / 2 - 100, getHeight() / 2);
+            // TEST - Draw Players
+            player1.draw(g2, this.gameTime);
+            player2.draw(g2, this.gameTime);
+
+            // TEST - Draw Pause
+            if (this.isPaused) {
+                g2.setColor(new Color(0, 0, 0, 150)); // Darken the screen
+                g2.fillRect(0, 0, this.getWidth(), this.getHeight());
+
+                if (!this.isCountingDown) {
+                    g2.setColor(MyUtils.COLOR_TRON1);
+                    g2.setFont(new Font("Arial", Font.BOLD, 50));
+                    g2.drawString("PAUSED", getWidth() / 2 - 100, getHeight() / 2);
+                }
             }
-        }
 
-        // TEST - Draw Score
-        g2.setFont(new Font("Agency FB", Font.BOLD, 100));
-        g2.setColor(MyUtils.COLOR_TRON1_TRANSPARENT);
-        g2.drawString(player1.getPlayerScore() + "", 50, this.getHeight() / 2);
-
-        g2.setColor(MyUtils.COLOR_TRON2_TRANSPARENT);
-        String p2ScoreText = player2.getPlayerScore() + "";
-        int p2TextWidth = g2.getFontMetrics().stringWidth(p2ScoreText);
-        g2.drawString(p2ScoreText, this.getWidth() - p2TextWidth - 50, this.getHeight() / 2);
-
-        // TEST - Draw CountDown
-        if (this.isCountingDown) {
-            g2.setColor(MyUtils.COLOR_TRON1);
+            // TEST - Draw Score
             g2.setFont(new Font("Agency FB", Font.BOLD, 100));
+            g2.setColor(MyUtils.COLOR_TRON1_TRANSPARENT);
+            g2.drawString(player1.getPlayerScore() + "", 50, this.getHeight() / 2);
 
-            String text = (this.countdownVal > 0) ? String.valueOf(this.countdownVal) : "GO!";
+            g2.setColor(MyUtils.COLOR_TRON2_TRANSPARENT);
+            String p2ScoreText = player2.getPlayerScore() + "";
+            int p2TextWidth = g2.getFontMetrics().stringWidth(p2ScoreText);
+            g2.drawString(p2ScoreText, this.getWidth() - p2TextWidth - 50, this.getHeight() / 2);
 
-            // Center the text
-            FontMetrics fm = g2.getFontMetrics();
-            int x = (getWidth() - fm.stringWidth(text)) / 2;
-            int y = (getHeight() / 2) + (fm.getAscent() / 4);
+            // TEST - Draw CountDown
+            if (this.isCountingDown) {
+                g2.setColor(MyUtils.COLOR_TRON1);
+                g2.setFont(new Font("Agency FB", Font.BOLD, 100));
 
-            g2.drawString(text, x, y);
+                String text = (this.countdownVal > 0) ? String.valueOf(this.countdownVal) : "GO!";
+
+                // Center the text
+                FontMetrics fm = g2.getFontMetrics();
+                int x = (getWidth() - fm.stringWidth(text)) / 2;
+                int y = (getHeight() / 2) + (fm.getAscent() / 4);
+
+                g2.drawString(text, x, y);
+            }
         }
     }
 
@@ -295,6 +356,9 @@ public class GameLauncher extends JPanel implements Runnable {
         im.put(KeyStroke.getKeyStroke("RIGHT"), "p2Right");
 
         im.put(KeyStroke.getKeyStroke("P"), "pauseGame");
+//        im.put(KeyStroke.getKeyStroke("E"), "startGameAction");
+        im.put(KeyStroke.getKeyStroke("E"), "enterGame");
+        im.put(KeyStroke.getKeyStroke("ESCAPE"), "backToMenu");
 
 
         // Player 1
@@ -364,5 +428,25 @@ public class GameLauncher extends JPanel implements Runnable {
                 togglePause();
             }
         });
+
+        // Start Game
+        am.put("enterGame", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (currentState == State.MENU) {
+                    currentState = State.PLAYING;
+                    restartGame();
+                }
+            }
+        });
+
+        // Back To Menu
+        am.put("backToMenu", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                currentState = State.MENU;
+            }
+        });
+
     }
 }
