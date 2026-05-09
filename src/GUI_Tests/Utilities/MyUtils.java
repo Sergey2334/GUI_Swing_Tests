@@ -1,7 +1,6 @@
 package GUI_Tests.Utilities;
 
-import GUI_Tests.GameSettings;
-import GUI_Tests.Player;
+import GUI_Tests.MainWinodw.TitleBar.TitleBar;
 import GUI_Tests.Utilities.DialogBox.DialogBox;
 import GUI_Tests.Utilities.DialogBox.DialogBoxOption;
 import GUI_Tests.MainWinodw.MainWindowUtilities.WindowAnimations;
@@ -95,6 +94,17 @@ public final class MyUtils {
             new Color(255, 255, 255)  // White
     };
 
+    // --- GAMEPLAY CONFIG ---
+    public static final int COUNTDOWN_START_VAL = 3;
+    public static final int SHAKE_INITIAL_MAGNITUDE = 15;
+    public static final int SHAKE_REDUCTION_STEP = 2;
+
+    // --- FONTS ---
+    public static final Font FONT_SCORE = new Font("Agency FB", Font.BOLD, 100);
+    public static final Font FONT_COUNTDOWN = new Font("Agency FB", Font.BOLD, 100);
+    public static final Font FONT_PAUSE = new Font("Arial", Font.BOLD, 50);
+
+
 
     private MyUtils() {
         throw new UnsupportedOperationException("Utility class cannot be instantiated");
@@ -103,14 +113,7 @@ public final class MyUtils {
     // FUNCTIONS
 
     private static Color transparentColor(Color color, int alphaValue) {
-        int hexColor = color.getRGB();
-        int alpha = alphaValue;
-
-        int r = (hexColor >> 16) & 0xFF;
-        int g = (hexColor >> 8) & 0xFF;
-        int b = (hexColor >> 0) & 0xFF;
-
-        return new Color(r, g, b, alpha);
+        return new Color(color.getRed(), color.getGreen(), color.getBlue(), alphaValue);
     }
 
     /* !!!-MAY CAUSE ERRORS IF SWITCHING PATHS-!!! */
@@ -153,11 +156,27 @@ public final class MyUtils {
         frame.addComponentListener(new ComponentAdapter() {
             @Override
             public void componentResized(ComponentEvent e) {
-                frame.setShape(new RoundRectangle2D.Double(
-                        0, 0, frame.getWidth(), frame.getHeight(), radius, radius));
+                // 1. Check if the window is in "True Fullscreen" mode
+                GraphicsDevice device = frame.getGraphicsConfiguration().getDevice();
+                if (device.getFullScreenWindow() == frame) {
+                    // If fullscreen, remove the shape (must be a rectangle)
+                    frame.setShape(null);
+                    return;
+                }
+
+                // 2. Only apply rounded corners if NOT maximized and NOT fullscreen
+                boolean isMaximized = (frame.getExtendedState() & Frame.MAXIMIZED_BOTH) != 0;
+                if (!isMaximized) {
+                    frame.setShape(new RoundRectangle2D.Double(
+                            0, 0, frame.getWidth(), frame.getHeight(), radius, radius));
+                } else {
+                    // Remove rounded corners when maximized so it fits the screen edges perfectly
+                    frame.setShape(null);
+                }
             }
         });
     }
+
 
     public static void applyRoundedCornersDialogBox(Window window, int radius) {
         window.setShape(new java.awt.geom.RoundRectangle2D.Double(
@@ -190,6 +209,52 @@ public final class MyUtils {
         }
     }
 
+    public static void toggleFullScreen(JFrame window) {
+        GraphicsDevice device = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+
+        // 1. Find the TitleBar component modularly
+        TitleBar titleBar = null;
+        for (Component comp : window.getContentPane().getComponents()) {
+            if (comp instanceof TitleBar) {
+                titleBar = (TitleBar) comp;
+                break;
+            }
+        }
+
+        if (device.getFullScreenWindow() == null) {
+            // --- ENTERING FULLSCREEN ---
+            // Save the state so we know if we were maximized or not
+            int currentState = window.getExtendedState();
+
+            if (titleBar != null) titleBar.setVisibleState(false);
+
+            // Use a client property to remember the state across modes
+            window.getRootPane().putClientProperty("preFullScreenState", currentState);
+
+            device.setFullScreenWindow(window);
+        } else {
+            // --- EXITING FULLSCREEN ---
+            device.setFullScreenWindow(null);
+
+            // Recover the old state
+            Object oldStateObj = window.getRootPane().getClientProperty("preFullScreenState");
+            int oldState = (oldStateObj instanceof Integer) ? (int)oldStateObj : Frame.NORMAL;
+
+            // Restore TitleBar
+            if (titleBar != null) titleBar.setVisibleState(true);
+
+            // CRITICAL FIX: Re-apply the state and force a layout update
+            window.setExtendedState(oldState);
+
+            if (oldState == Frame.NORMAL) {
+                window.setLocationRelativeTo(null);
+            }
+
+            window.revalidate();
+            window.repaint();
+        }
+    }
+
     private static int getExitDialogBoxValue(JFrame window) {
         DialogBoxOption dialogBoxOption1 = new DialogBoxOption(" Yes ", MyUtils.DIALOG_BOX_EXIT);
         DialogBoxOption dialogBoxOption2 = new DialogBoxOption(" No ", MyUtils.DIALOG_BOX_CANCEL);
@@ -210,19 +275,29 @@ public final class MyUtils {
     }
 
     public static void addDoubleClickOnTitleBarForFullScreen(JPanel titleBar) {
-        titleBar.addMouseListener(new MouseAdapter() {
+        MouseAdapter doubleClickAdapter = new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                // Only trigger if it is exactly 2 clicks (a double-click)
+                // Check for exactly 2 clicks
                 if (e.getClickCount() == 2) {
-                    JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(titleBar);
-
+                    JFrame frame = (JFrame) SwingUtilities.getWindowAncestor((Component) e.getSource());
                     if (frame != null) {
                         MyUtils.toggleMaximize(frame);
                     }
                 }
             }
-        });
+        };
+
+        // Apply the listener to the TitleBar itself
+        titleBar.addMouseListener(doubleClickAdapter);
+
+        // CRITICAL: Apply it to all children (like the TitleText) so clicking them also works!
+        for (Component child : titleBar.getComponents()) {
+            // Skip buttons (we don't want double-clicking the 'X' to maximize)
+            if (!(child instanceof JButton)) {
+                child.addMouseListener(doubleClickAdapter);
+            }
+        }
     }
 
     public static void addButtonHoverColorChangeEffect(JButton button, Color colorHover, Color colorExit) {
@@ -243,8 +318,18 @@ public final class MyUtils {
 
     //---------------- Game Launcher Functions ----------------
 
+    //---------------- Client Area Visuals  ----------------
+    public static void drawDeepGrid(Graphics2D g2, int w, int h) {
+        g2.setColor(new Color(15, 15, 25));
+        for (int i = 0; i < w; i += 50) g2.drawLine(i, 0, i, h);
+        for (int i = 0; i < h; i += 50) g2.drawLine(0, i, w, i);
+    }
+    //---------------- Client Area Visuals  ----------------
+
+
     public static void drawGrid(Graphics2D g2, JPanel gameLauncher) {
         g2.setColor(MyUtils.COLOR_GRAY2_TRANSPARENT);
+        g2.setStroke(new BasicStroke(1.0f));
 
         // If we Include a Border
         Insets insets = gameLauncher.getInsets();
@@ -340,36 +425,92 @@ public final class MyUtils {
 
 
     public static void drawWinScreen(Graphics2D g2, JPanel gameLauncher, String winnerName, Color winnerColor, float logoHue) {
-        // Dim the background
+        // 1. Dim the background
         g2.setColor(new Color(0, 0, 0, 200));
         g2.fillRect(0, 0, gameLauncher.getWidth(), gameLauncher.getHeight());
 
-        // Pulsing logic for the text
+        // 2. Pulsing Winner Text
         float pulse = (float) (Math.sin(System.currentTimeMillis() * 0.005) * 0.05 + 1);
-
         g2.setFont(new Font("Agency FB", Font.BOLD, (int)(100 * pulse)));
-        g2.setColor(winnerColor);
 
+        // Rainbow winner color
         Color winRainbow = Color.getHSBColor(logoHue, 1.0f, 1.0f);
         g2.setColor(winRainbow);
 
-        String text = winnerName + " VICTORIOUS";
-        FontMetrics fm = g2.getFontMetrics();
-        int x = (gameLauncher.getWidth() - fm.stringWidth(text)) / 2;
-        int y = gameLauncher.getHeight() / 2;
+        String mainText = winnerName + " VICTORIOUS";
+        FontMetrics fmMain = g2.getFontMetrics();
+        int xMain = (gameLauncher.getWidth() - fmMain.stringWidth(mainText)) / 2;
+        int yMain = gameLauncher.getHeight() / 2;
+        g2.drawString(mainText, xMain, yMain);
 
-        g2.drawString(text, x, y);
-
-        g2.setFont(new Font("Monospaced", Font.PLAIN, 20));
+        // 3. Sub-instructions (Rematch/Menu)
+        g2.setFont(new Font("Monospaced", Font.PLAIN, 18));
         g2.setColor(Color.WHITE);
-        g2.drawString("PRESS ESC TO RETURN TO MENU", x + 30, y + 80);
+
+        String subText = "PRESS ESC FOR MENU | PRESS E FOR REMATCH";
+        FontMetrics fmSub = g2.getFontMetrics();
+        int xSub = (gameLauncher.getWidth() - fmSub.stringWidth(subText)) / 2;
+        // Position it below the main text
+        g2.drawString(subText, xSub, yMain + 80);
     }
 
-    public static boolean isOutOfBounds(Player p, int w, int h) {
-        return p.getPlayerX() < 0 ||
-                p.getPlayerX() > w - MyUtils.PLAYER_TILE_SIZE ||
-                p.getPlayerY() < 0 ||
-                p.getPlayerY() > h - MyUtils.PLAYER_TILE_SIZE;
+// --- MODULAR DRAWING HELPERS ---
+    public static void drawVoidWalls(Graphics2D g2, int w, int h, double arenaInset) {
+        float wallThickness = (float) arenaInset;
+        if (wallThickness > 0) {
+            // Draw the dark outer "Void"
+            g2.setStroke(new BasicStroke(wallThickness * 2, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER));
+            g2.setColor(COLOR_BLACK1.brighter());
+            g2.drawRect(0, 0, w, h);
+
+            // Draw the neon red "Laser Fence"
+            g2.setStroke(new BasicStroke(5));
+            g2.setColor(Color.RED);
+            int inset = (int) arenaInset;
+            g2.drawRect(inset, inset, w - (inset * 2), h - (inset * 2));
+        }
+    }
+
+    public static void drawScores(Graphics2D g2, int w, int h, int s1, int s2) {
+        g2.setFont(FONT_SCORE);
+
+        // Player 1
+        g2.setColor(COLOR_TRON1_TRANSPARENT);
+        g2.drawString(String.valueOf(s1), 50, h / 2);
+
+        // Player 2
+        g2.setColor(COLOR_TRON2_TRANSPARENT);
+        String p2Text = String.valueOf(s2);
+        int p2X = w - g2.getFontMetrics().stringWidth(p2Text) - 50;
+        g2.drawString(p2Text, p2X, h / 2);
+    }
+
+    public static void drawCountdown(Graphics2D g2, int w, int h, int value) {
+        g2.setColor(new Color(0, 0, 0, 150));
+        g2.fillRect(0, 0, w, h);
+
+        g2.setColor(COLOR_TRON1);
+        g2.setFont(FONT_COUNTDOWN);
+        String text = (value > 0) ? String.valueOf(value) : "GO!";
+        FontMetrics fm = g2.getFontMetrics();
+        int x = (w - fm.stringWidth(text)) / 2;
+        int y = (h / 2) + (fm.getAscent() / 4);
+        g2.drawString(text, x, y);
+    }
+
+    public static void drawPauseOverlay(Graphics2D g2, int w, int h) {
+        // 1. Darken the entire screen
+        g2.setColor(new Color(0, 0, 0, 150));
+        g2.fillRect(0, 0, w, h);
+
+        // 2. Draw "PAUSED" text
+        g2.setColor(COLOR_TRON1);
+        g2.setFont(FONT_PAUSE);
+        String text = "PAUSED";
+        FontMetrics fm = g2.getFontMetrics();
+        int x = (w - fm.stringWidth(text)) / 2;
+        int y = h / 2;
+        g2.drawString(text, x, y);
     }
 
     //---------------- Game Launcher Functions ----------------

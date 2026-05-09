@@ -1,7 +1,7 @@
 package GUI_Tests.MainWinodw;
 
-import GUI_Tests.MainWinodw.MainWindowClientArea.MainWindowClientArea;
-import GUI_Tests.MainWinodw.MainWindowTitleBar.MainWindowTitleBar;
+import GUI_Tests.MainWinodw.ClientArea.ClientArea;
+import GUI_Tests.MainWinodw.TitleBar.TitleBar;
 import GUI_Tests.MainWinodw.MainWindowUtilities.WindowDragger;
 import GUI_Tests.MainWinodw.MainWindowUtilities.WindowGlassResizer;
 import GUI_Tests.Utilities.MyUtils;
@@ -10,35 +10,21 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowStateListener;
 
 public class MainWindow extends JFrame {
     private final String name = "Main Window";
-
-    private int windowBoundX;
-    private int windowBoundY;
-
-    private int windowWidth;
-    private int windowHeight;
-
-    // TEST
-    private Rectangle windowOriginalBounds;
-
-
-    private MainWindowTitleBar mainWindowTitleBar;
-    private MainWindowClientArea mainWindowClientArea;
-
+    private TitleBar titleBar;
+    private ClientArea clientArea;
 
     public MainWindow(String title) {
         this.initializeWindow(title);
         this.initializeWindowDraggable();
         this.initializeWindowResizable();
 
-        // TEST
-        this.windowBoundX = this.getBounds().x;
-        this.windowBoundY = this.getBounds().y;
-        this.windowWidth = this.getBounds().width;
-        this.windowHeight = this.getBounds().height;
-        this.windowOriginalBounds =  new Rectangle(this.windowBoundX, this.windowBoundY, this.windowWidth, this.windowHeight);
+        // Fix the Animation Stalling Bug
+        this.setupResizeListener();
 
         MyUtils.printSuccessfulInitialization(this.name);
     }
@@ -46,54 +32,58 @@ public class MainWindow extends JFrame {
     private void initializeWindow(String title) {
         this.setUndecorated(true);
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        this.setResizable(false);
         this.setLayout(new BorderLayout());
 
+        // Basic Constraints
         this.setMinimumSize(new Dimension(MyUtils.WINDOW_MIN_WIDTH, MyUtils.WINDOW_MIN_HEIGHT));
         MyUtils.applyRoundedCorners(this, MyUtils.ROUNDED_CORNERS_RADIUS);
 
-//        this.setBackground(MyUtils.COLOR_TRANSPARENT); // Does Background, but ContentPane is on Top, unless Transparent
-        this.setBackground(MyUtils.COLOR_BLACK1); // TEST - Fixed The Flickering, But No Transparent Background
-        this.getContentPane().setBackground(MyUtils.COLOR_BLACK1); // If JFrame Background is Transparent , then this won't matter
-//        this.setIgnoreRepaint(true);// TEST - Should Fix Flickering
+        // Styling
+        this.getContentPane().setBackground(MyUtils.COLOR_BLACK1);
+        this.setBackground(MyUtils.COLOR_BLACK1);
 
-        this.setName(title);
         this.setTitle(title);
         MyUtils.setWindowIcon(this);
 
-        this.mainWindowTitleBar = new MainWindowTitleBar(title);
-        this.mainWindowClientArea = new MainWindowClientArea();
-        this.add(this.mainWindowTitleBar, BorderLayout.NORTH);
-        this.add(this.mainWindowClientArea, BorderLayout.CENTER);
+        // Component Assembly
+        this.titleBar = new TitleBar(title);
+        this.clientArea = new ClientArea();
+
+        this.add(this.titleBar, BorderLayout.NORTH);
+        this.add(this.clientArea, BorderLayout.CENTER);
 
         this.pack();
-        this.setLocationRelativeTo(null); // Important To Be Here Right Before setVisible(true) :D
+        this.setLocationRelativeTo(null);
         this.setVisible(true);
     }
 
-    private void initializeWindowDraggable()
-    {
-        WindowDragger.makeDraggable(this, mainWindowTitleBar); // Making the Window Draggable
+    private void setupResizeListener() {
+        // This ensures that when you drag the window edge,
+        // the GameLauncher knows to refresh its background and grid.
+        this.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                // Re-validate the layout so the game fills the new space
+                MainWindow.this.revalidate();
+                MainWindow.this.repaint();
+            }
+        });
     }
 
-    private void initializeWindowResizable()
-    {
+    private void initializeWindowDraggable() {
+        // Updated to use our new simpler API from WindowDragger
+        WindowDragger.makeDraggable(this.titleBar);
+    }
+
+    private void initializeWindowResizable() {
         WindowGlassResizer glassResizer = new WindowGlassResizer(this);
         this.setGlassPane(glassResizer);
-        glassResizer.setVisible(true);
+        this.getGlassPane().setVisible(true);
     }
 
+    // --- GETTERS (Using the built-in JFrame data) ---
 
-    // TEST
-    public int  getWindowBoundX() {
-        return this.windowBoundX;
-    }
-    // TEST
-    public int getWindowBoundY() {
-        return this.windowBoundY;
-    }
-    // TEST
-    public Rectangle getOriginalWindowBounds() {
-        return this.windowOriginalBounds;
+    public Rectangle getWindowBounds() {
+        return this.getBounds();
     }
 }

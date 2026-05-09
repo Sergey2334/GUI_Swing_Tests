@@ -1,11 +1,11 @@
-package GUI_Tests.MainWinodw.MainWindowTitleBar;
+package GUI_Tests.MainWinodw.TitleBar;
 
 import GUI_Tests.Utilities.MyUtils;
 
 import javax.swing.*;
 
-public class TitleBarTitleText extends JLabel {
-    public TitleBarTitleText(String windowTitle) {
+public class TitleText extends JLabel {
+    public TitleText(String windowTitle) {
         this.initialize(windowTitle);
     }
 

@@ -1,91 +1,116 @@
 package GUI_Tests.MainWinodw.MainWindowUtilities;
 
+import GUI_Tests.Utilities.MyUtils;
+
 import javax.swing.*;
 import java.awt.*;
 
 public final class WindowAnimations {
 
-    private static final int FPS_DELAY = 10;
+    // TEST - Original
+//    private static final int FPS_DELAY = 10;
+//    private static final int TOTAL_FRAMES = 15;
+
+    // TEST - Works Smooth
+    private static final int FPS_DELAY = 8;
+    private static final int TOTAL_FRAMES = 16;
+
     private static Rectangle lastNormalBounds = null;
 
+    private WindowAnimations() {
+        throw new UnsupportedOperationException("Utility class");
+    }
+
     public static void minimizeWindow(JFrame window) {
-        final int originalState = window.getExtendedState();
+        if (window == null) return;
         final float startOpacity = window.getOpacity();
         final int[] frame = {0};
 
-        Timer timer = new Timer(10, e -> {
+        Timer timer = new Timer(FPS_DELAY, e -> {
             frame[0]++;
-            float progress = (float) frame[0] / 15;
+            float progress = (float) frame[0] / TOTAL_FRAMES;
             window.setOpacity(Math.max(0, startOpacity * (1 - progress)));
 
-            if (frame[0] >= 15) {
+            if (frame[0] >= TOTAL_FRAMES) {
                 ((Timer) e.getSource()).stop();
-                window.setExtendedState(originalState | Frame.ICONIFIED);
-                window.setOpacity(startOpacity);
+                window.setExtendedState(Frame.ICONIFIED);
+                window.setOpacity(startOpacity); // Reset for when it's restored
             }
         });
         timer.start();
     }
 
     public static void closeWindow(JFrame window) {
-        final float startOpacity = window.getOpacity();
+        if (window == null) return;
         final int[] frame = {0};
 
-        Timer timer = new Timer(FPS_DELAY, null);
-        timer.addActionListener(e -> {
+        Timer timer = new Timer(FPS_DELAY, e -> {
             frame[0]++;
-            if (frame[0] >= 15) {
+            float progress = (float) frame[0] / TOTAL_FRAMES;
+            window.setOpacity(Math.max(0, 1.0f - progress));
+
+            if (frame[0] >= TOTAL_FRAMES) {
                 ((Timer) e.getSource()).stop();
                 window.dispose();
                 System.exit(0);
-            } else {
-                float progress = (float) frame[0] / 15;
-                window.setOpacity(Math.max(0, startOpacity * (1 - progress)));
             }
         });
         timer.start();
     }
 
     public static boolean toggleMaximize(JFrame window) {
-        if ((window.getExtendedState() & Frame.ICONIFIED) != 0) {
-            window.setExtendedState(Frame.NORMAL);
-        }
+        if (window == null) return false;
 
+        // 1. Get current usable screen area
         GraphicsConfiguration config = window.getGraphicsConfiguration();
         Insets screenInsets = window.getToolkit().getScreenInsets(config);
+        Rectangle screenBounds = config.getBounds();
         Rectangle usableBounds = new Rectangle(
-                config.getBounds().x + screenInsets.left,
-                config.getBounds().y + screenInsets.top,
-                config.getBounds().width - (screenInsets.left + screenInsets.right),
-                config.getBounds().height - (screenInsets.top + screenInsets.bottom)
+                screenBounds.x + screenInsets.left,
+                screenBounds.y + screenInsets.top,
+                screenBounds.width - (screenInsets.left + screenInsets.right),
+                screenBounds.height - (screenInsets.top + screenInsets.bottom)
         );
 
-        boolean isMaximized = (window.getExtendedState() & Frame.MAXIMIZED_BOTH) != 0;
+        // 2. Check if we are currently maximized (OR if we are already filling the usable bounds)
+        boolean isCurrentlyMaximized = (window.getExtendedState() & Frame.MAXIMIZED_BOTH) != 0;
 
-        if (!isMaximized) {
+        // Safety check: if the window is exactly the size of usableBounds, treat it as maximized
+        if (window.getBounds().equals(usableBounds)) {
+            isCurrentlyMaximized = true;
+        }
+
+        if (!isCurrentlyMaximized) {
+            // GOING TO MAXIMIZED
             lastNormalBounds = window.getBounds();
             window.setMaximizedBounds(usableBounds);
             animateToggle(window, lastNormalBounds, usableBounds, true);
             return true;
         } else {
-            if (lastNormalBounds == null) {
-                lastNormalBounds = new Rectangle(usableBounds.x + 100, usableBounds.y + 100, 800, 600);
+            // GOING TO NORMAL (Shrinking)
+            // If we lost our "breadcrumb" during minimize, use a default 720p size centered
+            if (lastNormalBounds == null || lastNormalBounds.width >= usableBounds.width) {
+                lastNormalBounds = new Rectangle(
+                        usableBounds.x + (usableBounds.width - 1280) / 2,
+                        usableBounds.y + (usableBounds.height - 720) / 2,
+                        1280, 720
+                );
             }
+
             animateToggle(window, window.getBounds(), lastNormalBounds, false);
             return false;
         }
     }
 
     private static void animateToggle(JFrame window, Rectangle from, Rectangle to, boolean goMax) {
+        // 1. Temporarily disable rounded corners for MAX SPEED
+        window.setShape(null);
         window.setExtendedState(Frame.NORMAL);
 
         final int[] frame = {0};
-        final int totalFrames = 15;
-
-        Timer timer = new Timer(10, null);
-        timer.addActionListener(e -> {
+        Timer timer = new Timer(FPS_DELAY, e -> {
             frame[0]++;
-            float progress = (float) frame[0] / totalFrames;
+            float progress = (float) frame[0] / TOTAL_FRAMES;
             float ease = 1 - (float) Math.pow(1 - progress, 3);
 
             int x = (int) (from.x + (to.x - from.x) * ease);
@@ -95,15 +120,17 @@ public final class WindowAnimations {
 
             window.setBounds(x, y, w, h);
 
-            if (frame[0] >= totalFrames) {
+            if (frame[0] >= TOTAL_FRAMES) {
                 ((Timer) e.getSource()).stop();
 
                 if (goMax) {
                     window.setExtendedState(Frame.MAXIMIZED_BOTH);
                 } else {
-                    window.setExtendedState(Frame.NORMAL);
-                    window.setBounds(to);
+                    // 2. RE-ENABLE rounded corners only when the window is small and still
+                    MyUtils.applyRoundedCorners(window, MyUtils.ROUNDED_CORNERS_RADIUS);
                 }
+                window.revalidate();
+                window.repaint();
             }
         });
         timer.start();

@@ -33,12 +33,6 @@ public class DialogBoxOption extends JButton {
 
         MyUtils.addButtonHoverColorChangeEffect(this, MyUtils.COLOR_TRON2, MyUtils.COLOR_TRON1);
         this.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        this.addActionListener(e -> {
-            Window parentWindow = SwingUtilities.getWindowAncestor(this);
-            if (parentWindow != null) {
-                parentWindow.dispose();
-            }
-        });
 
         this.setVisible(true);
     }

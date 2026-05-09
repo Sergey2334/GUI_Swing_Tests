@@ -4,92 +4,78 @@ import GUI_Tests.Utilities.MyUtils;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 
 public class DialogBox extends JDialog {
-    private String dialogBoxMessage;
-    private DialogBoxOption[] dialogBoxOptions;
-
+    private final String message;
+    private final DialogBoxOption[] options;
     private int selectedValue = MyUtils.DIALOG_BOX_NOTHING;
 
-    public DialogBox(String dialogBoxMessage, DialogBoxOption[] dialogBoxOptions, JFrame parentFrame) {
-        this.dialogBoxMessage = dialogBoxMessage;
-        this.dialogBoxOptions = dialogBoxOptions;
-
-        this.initialize(parentFrame);
+    public DialogBox(String message, DialogBoxOption[] options, JFrame parent) {
+        super(parent, true); // Set modal and parent in super
+        this.message = message;
+        this.options = options;
+        this.initialize();
     }
 
-    private void initialize(JFrame parentFrame) {
-        this.setAlwaysOnTop(true);
-        this.setModal(true);
+    private void initialize() {
         this.setUndecorated(true);
         this.setBackground(MyUtils.COLOR_TRANSPARENT);
-//        MyUtils.applyRoundedCorners(this, MyUtils.ROUNDED_CORNERS_RADIUS);
-        this.setLayout(new BorderLayout());
-        this.setFocusable(true);
         this.setSize(MyUtils.WINDOW_MIN_WIDTH / 3, MyUtils.WINDOW_MIN_HEIGHT / 3);
-        this.setLocationRelativeTo(parentFrame);
+        this.setLocationRelativeTo(this.getOwner());
+        this.setLayout(new BorderLayout());
+
+        // Apply visual style
         MyUtils.applyRoundedCornersDialogBox(this, MyUtils.ROUNDED_CORNERS_RADIUS_DIALOG_BOX);
 
-        DialogBoxMessage dialogBoxMessage = new DialogBoxMessage(this.dialogBoxMessage);
-        this.add(dialogBoxMessage, BorderLayout.NORTH);
+        // Add Components using modular methods
+        this.add(new DialogBoxMessage(this.message), BorderLayout.NORTH);
+        this.add(this.createOptionsPanel(), BorderLayout.CENTER);
 
-        if (dialogBoxOptions != null) {
-            JPanel dialogOptionsPanel = new JPanel();
-            dialogOptionsPanel.setOpaque(true);
-            dialogOptionsPanel.setBackground(MyUtils.COLOR_BLACK1_TRANSPARENT3);
+        this.setupKeyBindings();
+        this.setVisible(true);
+    }
 
-            // TEST GridBagLayout :D
-            dialogOptionsPanel.setLayout(new GridBagLayout());
-            GridBagConstraints c = new GridBagConstraints();
-            c.fill = GridBagConstraints.BOTH;
-            c.insets = new Insets(10, 10, 10, 10); // Margin
+    private JPanel createOptionsPanel() {
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setBackground(MyUtils.COLOR_BLACK1_TRANSPARENT3);
 
-            for (int i = 0; i < this.dialogBoxOptions.length; i++) {
-                int finalI = i;
-                dialogBoxOptions[i].addActionListener(e -> {
-                    this.selectedValue = dialogBoxOptions[finalI].getOptionValue();
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(10, 10, 10, 10);
 
-                    this.dispose();
-                });
-
-                this.dialogBoxOptions[i].setVisible(true);
-                dialogOptionsPanel.add(this.dialogBoxOptions[i], c); // Has Margin for GridBagLayout
-            }
-
-            dialogOptionsPanel.setVisible(true);
-            this.add(dialogOptionsPanel, BorderLayout.CENTER);
+        for (DialogBoxOption option : this.options) {
+            // The DialogBox handles the click logic, NOT the button!
+            option.addActionListener(e -> {
+                this.selectedValue = option.getOptionValue();
+                this.dispose();
+            });
+            panel.add(option, gbc);
         }
+        return panel;
+    }
 
-        // TEST - Add "Enter" and "ESC" For Quick Option Select
-        JRootPane rootPane = this.getRootPane();
-        rootPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(
-                KeyStroke.getKeyStroke("ENTER"), "confirmYes"
-        );
-        rootPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(
-                KeyStroke.getKeyStroke("ESCAPE"), "cancelNo"
-        );
-        rootPane.getActionMap().put("confirmYes", new AbstractAction() {
+    private void setupKeyBindings() {
+        InputMap im = this.getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap am = this.getRootPane().getActionMap();
+
+        // Confirm (ENTER)
+        im.put(KeyStroke.getKeyStroke("ENTER"), "confirm");
+        am.put("confirm", new AbstractAction() {
             @Override
-            public void actionPerformed(ActionEvent e) {
-                for (DialogBoxOption option : dialogBoxOptions) {
-                    if (option.getOptionValue() == MyUtils.DIALOG_BOX_EXIT) {
-                        selectedValue = MyUtils.DIALOG_BOX_EXIT;
-                        dispose();
-                        break;
-                    }
-                }
-            }
-        });
-        rootPane.getActionMap().put("cancelNo", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                selectedValue = MyUtils.DIALOG_BOX_CANCEL;
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                DialogBox.this.selectedValue = MyUtils.DIALOG_BOX_EXIT; // Note: You'll need to use DialogBox.this.selectedValue if inside an anonymous class
                 dispose();
             }
         });
 
-        this.setVisible(true);
+        // Cancel (ESCAPE) - Use the full word "ESCAPE"
+        im.put(KeyStroke.getKeyStroke("ESCAPE"), "cancel");
+        am.put("cancel", new AbstractAction() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                DialogBox.this.selectedValue = MyUtils.DIALOG_BOX_CANCEL;
+                dispose();
+            }
+        });
     }
 
     public int getSelectedValue() {
