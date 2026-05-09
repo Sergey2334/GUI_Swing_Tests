@@ -12,6 +12,7 @@ public class Player {
     private int startDirection;
     private int moveSpeed;
     private boolean isAlive;
+    private boolean isInvincible;
     private Color color;
 
     // 2. Modular Components
@@ -32,6 +33,7 @@ public class Player {
         this.startDirection = startDirection;
         this.moveSpeed = moveSpeed;
         this.isAlive = true;
+        this.isInvincible = false;
 
         // Initialize the modular Trail
         this.playerTrail = new PlayerTrail(this.color);
@@ -60,24 +62,43 @@ public class Player {
     }
 
     public void draw(Graphics2D g2, long currentGameTime) {
-        // 1. Calculate Pulse Factor for visuals
+        // 1. SAVE the current rendering state (The OOP "Restore" Pattern)
+        java.awt.Composite oldComposite = g2.getComposite();
+
+        // 2. Handle Invincibility Transparency (The Ghost Effect)
+        if (this.isInvincible) {
+            // Creates a smooth fading in and out effect (between 0.2 and 0.7 transparency)
+            float alpha = (float) (0.45 + 0.25 * Math.sin(currentGameTime * 0.01));
+            g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+        }
+
+        // 3. Calculate Pulse Factor (For the glow and trail)
         float pulse = (float) (Math.sin(currentGameTime * 0.001) * 0.1 + 1.0);
 
-        // 2. Draw the Trail first (so it's behind the bike)
+        // 4. Draw the Trail (Behind the bike)
+        // Assuming playerTrail is a member of this class
         this.playerTrail.draw(g2, currentGameTime, pulse);
 
-        // 3. Draw the Bike Glow
+        // 5. Draw the Bike Glow
         int glowSize = (int) (MyUtils.PLAYER_TILE_SIZE * 1.1 * pulse);
         int glowOffset = (glowSize - MyUtils.PLAYER_TILE_SIZE) / 2;
+        // Glow uses a low alpha (100) for a soft neon look
         g2.setColor(new Color(this.color.getRed(), this.color.getGreen(), this.color.getBlue(), 100));
         g2.fillOval((int)this.playerX - glowOffset, (int)this.playerY - glowOffset, glowSize, glowSize);
 
-        // 4. Draw the Bike Body
+        // 6. Draw the Bike Body
+        // Core (White center for neon effect)
         g2.setColor(Color.WHITE);
         g2.fillRect((int) this.playerX, (int) this.playerY, MyUtils.PLAYER_TILE_SIZE, MyUtils.PLAYER_TILE_SIZE);
+
+        // Border (The neon color)
         g2.setColor(this.color);
         g2.setStroke(new BasicStroke(2));
         g2.drawRect((int) this.playerX, (int) this.playerY, MyUtils.PLAYER_TILE_SIZE, MyUtils.PLAYER_TILE_SIZE);
+
+        // 7. RESTORE the original rendering state
+        // This is critical so the next thing drawn (like UI) isn't transparent!
+        g2.setComposite(oldComposite);
     }
 
     public void setDirection(int newDirection) {
@@ -113,6 +134,9 @@ public class Player {
     public double getLastPointX() { return this.lastPointX; }
     public double getLastPointY() { return this.lastPointY; }
     public PlayerTrail getPlayerTrail() { return this.playerTrail; }
+    public int getSpeed() { return this.moveSpeed; }
     public void setSpeed(int newSpeed) { this.moveSpeed = newSpeed; }
+    public boolean isInvincible() { return this.isInvincible; }
+    public void setInvincible(boolean invincible) { this.isInvincible = invincible; }
     public void setColor(Color color) { this.color = color; }
 }

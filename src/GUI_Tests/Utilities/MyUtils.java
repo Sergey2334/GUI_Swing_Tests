@@ -104,6 +104,16 @@ public final class MyUtils {
             // More to add Later
     };
 
+    // --- POWER UPS  ---
+
+    public static final int POWER_UP_SPEED_MODIFIER = 2;
+    public static final int POWER_UP_SPEED_DURATION = 3;
+    public static final int POWER_UP_INVINCIBLE_DURATION = 5;
+    public static final int POWER_UP_SPAWN_DELAY = 10
+            ;
+
+    // --- POWER UPS  ---
+
     // --- GAMEPLAY CONFIG ---
     public static final int COUNTDOWN_START_VAL = 3;
     public static final int SHAKE_INITIAL_MAGNITUDE = 15;

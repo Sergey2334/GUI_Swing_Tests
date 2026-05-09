@@ -1,7 +1,9 @@
 package GUI_Tests.Root;
 
 import GUI_Tests.Entities.Player.Player;
+import GUI_Tests.Entities.PowerUps.PowerUp;
 import GUI_Tests.Managers.EffectManager;
+import GUI_Tests.Managers.PowerUpSpawner;
 import GUI_Tests.Managers.ScoreManager;
 import GUI_Tests.Managers.SetupManager;
 import GUI_Tests.Utilities.MyUtils;
@@ -24,6 +26,9 @@ public class GameLauncher extends JPanel implements Runnable {
     private final ScoreManager scoreManager = new ScoreManager();
     private GameSettings gameSettings = new GameSettings();
     private SetupManager setupManager = new SetupManager(this.gameSettings);
+    private final java.util.List<PowerUp> activePowerUps = new java.util.concurrent.CopyOnWriteArrayList<>();
+
+
 
     // 3. Game State & Visuals
     public enum State {MENU, SETUP, PLAYING, WIN}
@@ -103,6 +108,10 @@ public class GameLauncher extends JPanel implements Runnable {
         return this.setupManager;
     }
 
+    public java.util.List<PowerUp>  getActivePowerUps() {
+        return this.activePowerUps;
+    }
+
 
     public void backToMenu() {
         this.currentState = State.MENU;
@@ -122,6 +131,7 @@ public class GameLauncher extends JPanel implements Runnable {
         this.isCountingDown = true;
         this.countdownVal = MyUtils.COUNTDOWN_START_VAL;
         this.arenaInset = MyUtils.GAME_ARENA_INSET;
+        this.activePowerUps.clear(); // TEST - Make it here or at restartGame
 
         // 2. APPLY CHOSEN SETTINGS (The OOP Injection)
         // Update Player 1
@@ -155,6 +165,7 @@ public class GameLauncher extends JPanel implements Runnable {
     }
 
     public void restartGame() {
+//        this.activePowerUps.clear(); // TEST - Make it here or at restartRound
         this.scoreManager.resetScores();
 
         this.scoreManager.setWinLimit(this.gameSettings.getWinScore());
@@ -176,6 +187,11 @@ public class GameLauncher extends JPanel implements Runnable {
 
     private void drawGameLevel(Graphics2D g2) {
         MyUtils.drawGrid(g2, this);
+
+        for (PowerUp p : this.activePowerUps) {
+            p.draw(g2);
+        }
+
         this.player1.draw(g2, this.gameTime);
         this.player2.draw(g2, this.gameTime);
         this.effectManager.draw(g2);
@@ -275,12 +291,35 @@ public class GameLauncher extends JPanel implements Runnable {
         boolean p2WallHit = this.isOutOfBounds(this.player2);
 
         // 4. Combine results
-        boolean p1Died = p1HitSelf || p1HitP2 || p1WallHit;
-        boolean p2Died = p2HitSelf || p2HitP1 || p2WallHit;
+        boolean p1Died = (p1HitSelf || p1HitP2 || p1WallHit) && !this.player1.isInvincible();
+        boolean p2Died = (p2HitSelf || p2HitP1 || p2WallHit) && !this.player2.isInvincible();
 
         if (p1Died || p2Died) {
             this.handleDeath(p1Died, p2Died);
         }
+
+        this.checkPowerUpCollisions();
+    }
+
+    private void checkPowerUpCollisions() {
+        for (PowerUp p : this.activePowerUps) {
+            if (!p.isCollected()) {
+                // Simple bounding box check
+                Rectangle player1Rect = new Rectangle((int) this.player1.getPlayerX(), (int) this.player1.getPlayerY(), 20, 20);
+                Rectangle player2Rect = new Rectangle((int) this.player2.getPlayerX(), (int) this.player2.getPlayerY(), 20, 20);
+                Rectangle powerUpRect = new Rectangle(p.getX(), p.getY(), 20, 20);
+
+                if (player1Rect.intersects(powerUpRect)) {
+                    p.applyEffect(this.player1);
+                    this.effectManager.addText(p.getName(), p.getX(), p.getY(), this.player1.getColor(), 1000);
+                } else if (player2Rect.intersects(powerUpRect)) {
+                    p.applyEffect(this.player2);
+                    this.effectManager.addText(p.getName(), p.getX(), p.getY(), this.player2.getColor(), 1000);
+                }
+            }
+        }
+        // Cleanup collected power-ups
+        this.activePowerUps.removeIf(PowerUp::isCollected);
     }
 
     private void handleDeath(boolean p1Died, boolean p2Died) {
@@ -372,6 +411,7 @@ public class GameLauncher extends JPanel implements Runnable {
     public void startGame() {
         this.isRunning = true;
         this.gameThread = new Thread(this);
+        new Thread(new PowerUpSpawner(this)).start();
         this.gameThread.start();
     }
 }
