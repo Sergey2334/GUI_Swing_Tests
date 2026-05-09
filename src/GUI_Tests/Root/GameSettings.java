@@ -11,7 +11,7 @@ public class GameSettings {
     private boolean vsAI = false; // The new AI flag
 
     private Color p1Color = MyUtils.TRON_COLORS[0];
-    private Color p2Color = MyUtils.TRON_COLORS[3];
+    private Color p2Color = MyUtils.TRON_COLORS[2];
 
     public void setDifficulty(String type) {
         switch(type) {

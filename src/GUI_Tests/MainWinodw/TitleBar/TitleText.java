@@ -11,18 +11,12 @@ public class TitleText extends JLabel {
 
     private void initialize(String windowTitle) {
         this.setText(windowTitle);
-
         MyUtils.setTitleBarTextIcon(this);
 
+        this.setBorder(MyUtils.PADDING_STANDARD);
 
-        //TEST
-//        this.setBorder(MyUtils.BORDER_TEST_RED);
-//        this.setBackground(MyUtils.COLOR_TRANSPARENT); // JLabel need setOpaque(true)
-//        this.setOpaque(true);
         this.setForeground(MyUtils.COLOR_TRON1);
-
-
-        this.setHorizontalAlignment(JLabel.CENTER);
+        this.setHorizontalAlignment(JLabel.LEFT); // Usually looks better with left padding
         this.setVerticalAlignment(JLabel.CENTER);
 
         this.setHorizontalTextPosition(JLabel.RIGHT);
@@ -30,9 +24,7 @@ public class TitleText extends JLabel {
 
         this.setFont(MyUtils.FONT_TRON1);
 
-        // Optional
-        // this.setIconTextGap(25);
-
+        this.setIconTextGap(5); // Spacing between the Icon and the Text
         this.setVisible(true);
     }
 }

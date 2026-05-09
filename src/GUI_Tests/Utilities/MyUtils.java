@@ -29,6 +29,8 @@ public final class MyUtils {
     public static final Color COLOR_BLACK1_TRANSPARENT = new Color(25, 25, 25, 80);
     public static final Color COLOR_BLACK1_TRANSPARENT2 = new Color(25, 25, 25, 180);
     public static final Color COLOR_BLACK1_TRANSPARENT3 = new Color(25, 25, 25, 200);
+    public static final javax.swing.border.Border PADDING_STANDARD =
+            BorderFactory.createEmptyBorder(5, 15, 5, 15);
 
 
     public static final Color COLOR_TEST_RED = new Color(0xFF0000);
@@ -71,7 +73,7 @@ public final class MyUtils {
     public static final int GAME_MIN_WIDTH = 1280;
     public static final int GAME_MIN_HEIGHT = 720;
     public static final int GAME_TILE_SIZE = 15;
-    public static final int PLAYER_TILE_SIZE = GAME_TILE_SIZE * 2;
+    public static final int PLAYER_TILE_SIZE = (int) (GAME_TILE_SIZE * 3.5);
     public static final int PLAYER_TRAIL_SIZE = GAME_TILE_SIZE / 2;
     public static final int PLAYER_SAFE_SEGMENT = PLAYER_TILE_SIZE;
     public static final int DIRECTION_UP = 90;
@@ -98,13 +100,32 @@ public final class MyUtils {
     public static final int PLAYER_WIN_SCORE_MEDIUM = 5;
     public static final int PLAYER_WIN_SCORE_HARD = 3;
     public static final Color[] TRON_COLORS = {
-            new Color(0, 255, 255),   // Cyan
-            new Color(255, 0, 255),   // Pink
-            new Color(50, 255, 50),   // Green
-            new Color(255, 150, 0),   // Orange
-            new Color(255, 255, 255)  // White
+            new Color(0x7DFDFE),    // Cyan
+            new Color(0x00FF00),    // Green
+            new Color(0xF2A007),    // Orange
+            new Color(0xFF46A2),    // Pink
+            new Color(0xA500FF),    // Purple
+            new Color(0xFF0000),    // Red
+            new Color(0xFFFFFF),    // White
+            new Color(0xF2CB05),    // Yellow
             // More to add Later
     };
+    public static final String[] TRON_COLORS_ARRAY = {
+            "player_cyan",
+            "player_green",
+            "player_orange",
+            "player_pink",
+            "player_purple",
+            "player_red",
+            "player_white",
+            "player_yellow",
+    };
+
+
+    public static final String POWER_UP_BOOST = "powerup_boost";
+    public static final String POWER_UP_BOOST_PATH = "powerup_invincible";
+    public static final String POWER_UP_INVINCIBLE = "powerup_invincible";
+    public static final String POWER_UP_INVINCIBLE_PATH = "powerup_invincible";
 
     // --- POWER UPS  ---
 

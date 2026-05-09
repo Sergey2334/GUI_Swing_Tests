@@ -140,9 +140,11 @@ public class GameLauncher extends JPanel implements Runnable {
         // Update Player 1
         this.player1.setColor(this.gameSettings.getP1Color());
         this.player1.setSpeed(this.gameSettings.getSpeed());
+        this.player1.updateTexture();
         // Update Player 2
         this.player2.setColor(this.gameSettings.getP2Color());
         this.player2.setSpeed(this.gameSettings.getSpeed());
+        this.player2.updateTexture();
         this.player2.setAI(this.gameSettings.isVsAI()); // If P2 is AI :D
 
         // 3. Reset Positions
@@ -366,11 +368,11 @@ public class GameLauncher extends JPanel implements Runnable {
         } else {
             if (p1Died) {
                 this.scoreManager.addScore(2); // P2 Scores
-                this.effectManager.addText("P2 SCORES", getWidth()/2.0, getHeight()/3.0, MyUtils.COLOR_TRON2, 2000);
+                this.effectManager.addText("P2 SCORES", getWidth()/2.0, getHeight()/3.0, this.player2.getColor(), 2000);
                 this.effectManager.createExplosion(this.player1.getPlayerX(), this.player1.getPlayerY(), this.player1.getColor());
             } else {
                 this.scoreManager.addScore(1); // P1 Scores
-                this.effectManager.addText("P1 SCORES", getWidth()/2.0, getHeight()/3.0, MyUtils.COLOR_TRON1, 2000);
+                this.effectManager.addText("P1 SCORES", getWidth()/2.0, getHeight()/3.0, this.player1.getColor(), 2000);
                 this.effectManager.createExplosion(this.player2.getPlayerX(), this.player2.getPlayerY(), this.player2.getColor());
             }
         }

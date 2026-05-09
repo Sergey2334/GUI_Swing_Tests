@@ -9,7 +9,7 @@ public class SetupManager {
     private int currentRow = 0;
     private int diffIndex = 1;
     private int p1ColIndex = 0;
-    private int p2ColIndex = 3;
+    private int p2ColIndex = 2;
 
     private final String[] difficultyLabels = {"RELAXED", "STANDARD", "HYPER"};
 

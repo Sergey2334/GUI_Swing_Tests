@@ -11,7 +11,7 @@ public class PlayerTrail {
     // 1. Properties
     private final List<Breadcrumb> points = new CopyOnWriteArrayList<>();
     private final List<TrailSegment> segments = new CopyOnWriteArrayList<>();
-    private final Color color;
+    private Color color;
     private static final long LIFETIME = MyUtils.PLAYER_TRAIL_LIFETIME_MEDIUM;
 
     public PlayerTrail(Color color) {
@@ -39,6 +39,7 @@ public class PlayerTrail {
 
     // 3. Rendering: The neon glow layers
     public void draw(Graphics2D g2, long currentTime, float pulse) {
+        g2.setColor(this.color);
         List<Breadcrumb> pointsCopy = new ArrayList<>(this.points);
         Breadcrumb lastCrumb = null;
 
@@ -98,6 +99,10 @@ public class PlayerTrail {
     public void clear() {
         this.points.clear();
         this.segments.clear();
+    }
+
+    public void setTrailColor(Color color) {
+        this.color = color;
     }
 
     public List<TrailSegment> getSegments() {
