@@ -73,27 +73,35 @@ public final class MyUtils {
     public static final int GAME_TILE_SIZE = 15;
     public static final int PLAYER_TILE_SIZE = GAME_TILE_SIZE * 2;
     public static final int PLAYER_TRAIL_SIZE = GAME_TILE_SIZE / 2;
-    public static final long PLAYER_TRAIL_LIFETIME = 14 * 1000;
     public static final int PLAYER_SAFE_SEGMENT = PLAYER_TILE_SIZE;
-    public static final int GAME_SPEED_FAST = 10;
-    public static final int GAME_SPEED_MEDIUM = 5;
-    public static final int GAME_SPEED_SLOW = 2;
     public static final int DIRECTION_UP = 90;
     public static final int DIRECTION_LEFT = 180;
     public static final int DIRECTION_DOWN = 270;
     public static final int DIRECTION_RIGHT = 0;
     public static final int PLAYER_TURN_DELAY = 100;
     public static final double GAME_ARENA_INSET = 0;
-    public static final double GAME_ARENA_INSET_SHRINK_SPEED = 0.03;
-    public static final int PLAYER_WIN_SCORE = 2;
     public static final String PLAYER1_NAME = "P1";
     public static final String PLAYER2_NAME = "P2";
+
+    public static final long PLAYER_TRAIL_LIFETIME_SHORT = 7 * 1000;
+    public static final long PLAYER_TRAIL_LIFETIME_MEDIUM = 14 * 1000;
+    public static final long PLAYER_TRAIL_LIFETIME_LONG = 25 * 1000;
+    public static final int GAME_SPEED_FAST = 10;
+    public static final int GAME_SPEED_MEDIUM = 5;
+    public static final int GAME_SPEED_SLOW = 2;
+    public static final double GAME_ARENA_INSET_SHRINK_SPEED_SLOW = 0.01;
+    public static final double GAME_ARENA_INSET_SHRINK_SPEED_MEDIUM = 0.03;
+    public static final double GAME_ARENA_INSET_SHRINK_SPEED_FAST = 0.07;
+    public static final int PLAYER_WIN_SCORE_EASY = 7;
+    public static final int PLAYER_WIN_SCORE_MEDIUM = 5;
+    public static final int PLAYER_WIN_SCORE_HARD = 3;
     public static final Color[] TRON_COLORS = {
             new Color(0, 255, 255),   // Cyan
             new Color(255, 0, 255),   // Pink
             new Color(50, 255, 50),   // Green
             new Color(255, 150, 0),   // Orange
             new Color(255, 255, 255)  // White
+            // More to add Later
     };
 
     // --- GAMEPLAY CONFIG ---
@@ -114,7 +122,7 @@ public final class MyUtils {
 
     // FUNCTIONS
 
-    private static Color transparentColor(Color color, int alphaValue) {
+    public static Color transparentColor(Color color, int alphaValue) {
         return new Color(color.getRed(), color.getGreen(), color.getBlue(), alphaValue);
     }
 
@@ -473,15 +481,15 @@ public final class MyUtils {
         }
     }
 
-    public static void drawScores(Graphics2D g2, int w, int h, int s1, int s2) {
-        g2.setFont(FONT_SCORE);
+    public static void drawScores(Graphics2D g2, int w, int h, int s1, int s2, Color p1Color, Color p2Color) {
+        g2.setFont(MyUtils.FONT_SCORE);
 
         // Player 1
-        g2.setColor(COLOR_TRON1_TRANSPARENT);
+        g2.setColor(p1Color);
         g2.drawString(String.valueOf(s1), 50, h / 2);
 
         // Player 2
-        g2.setColor(COLOR_TRON2_TRANSPARENT);
+        g2.setColor(p2Color);
         String p2Text = String.valueOf(s2);
         int p2X = w - g2.getFontMetrics().stringWidth(p2Text) - 50;
         g2.drawString(p2Text, p2X, h / 2);

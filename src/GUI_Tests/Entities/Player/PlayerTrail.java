@@ -12,7 +12,7 @@ public class PlayerTrail {
     private final List<Breadcrumb> points = new CopyOnWriteArrayList<>();
     private final List<TrailSegment> segments = new CopyOnWriteArrayList<>();
     private final Color color;
-    private static final long LIFETIME = MyUtils.PLAYER_TRAIL_LIFETIME;
+    private static final long LIFETIME = MyUtils.PLAYER_TRAIL_LIFETIME_MEDIUM;
 
     public PlayerTrail(Color color) {
         this.color = color;

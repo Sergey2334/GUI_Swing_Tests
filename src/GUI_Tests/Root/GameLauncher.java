@@ -3,6 +3,7 @@ package GUI_Tests.Root;
 import GUI_Tests.Entities.Player.Player;
 import GUI_Tests.Managers.EffectManager;
 import GUI_Tests.Managers.ScoreManager;
+import GUI_Tests.Managers.SetupManager;
 import GUI_Tests.Utilities.MyUtils;
 
 import javax.swing.*;
@@ -21,9 +22,11 @@ public class GameLauncher extends JPanel implements Runnable {
     private Player player2;
     private EffectManager effectManager;
     private final ScoreManager scoreManager = new ScoreManager();
+    private GameSettings gameSettings = new GameSettings();
+    private SetupManager setupManager = new SetupManager(this.gameSettings);
 
     // 3. Game State & Visuals
-    private enum State {MENU, PLAYING, WIN}
+    public enum State {MENU, SETUP, PLAYING, WIN}
 
     private State currentState = State.MENU;
     private double arenaInset = MyUtils.GAME_ARENA_INSET;
@@ -73,11 +76,33 @@ public class GameLauncher extends JPanel implements Runnable {
     }
 
     public void handleEnterKey() {
-        if (this.currentState == State.MENU || this.currentState == State.WIN) {
+        if (this.currentState == State.MENU) {
+            this.currentState = State.SETUP;
+        } else if (this.currentState == State.SETUP) {
+            if (this.setupManager.getCurrentRow() == 3) { // START button
+                this.currentState = State.PLAYING;
+                this.restartGame();
+            }
+        } else if (this.currentState == State.WIN) {
             this.currentState = State.PLAYING;
             this.restartGame();
         }
     }
+
+    public void openSetup() {
+        if (this.currentState == State.MENU) {
+            this.currentState = State.SETUP;
+        }
+    }
+
+    public State getCurrentState() {
+        return this.currentState;
+    }
+
+    public SetupManager getSetupManager() {
+        return this.setupManager;
+    }
+
 
     public void backToMenu() {
         this.currentState = State.MENU;
@@ -85,9 +110,12 @@ public class GameLauncher extends JPanel implements Runnable {
 
     public void togglePause() {
         // This flips the pause state (true to false, or false to true)
+        if (this.isCountingDown)
+        {
+            return;
+        }
         this.isPaused = !this.isPaused;
     }
-
     private void restartRound() {
         // 1. Initial State Setup
         this.isPaused = true;
@@ -95,20 +123,27 @@ public class GameLauncher extends JPanel implements Runnable {
         this.countdownVal = MyUtils.COUNTDOWN_START_VAL;
         this.arenaInset = MyUtils.GAME_ARENA_INSET;
 
+        // 2. APPLY CHOSEN SETTINGS (The OOP Injection)
+        // Update Player 1
+        this.player1.setColor(this.gameSettings.getP1Color());
+        this.player1.setSpeed(this.gameSettings.getSpeed());
+        // Update Player 2
+        this.player2.setColor(this.gameSettings.getP2Color());
+        this.player2.setSpeed(this.gameSettings.getSpeed());
+
+        // 3. Reset Positions
         this.player1.respawn();
         this.player2.respawn();
 
-        // 2. The Countdown Thread
+        // 4. The Countdown Thread
         new Thread(() -> {
             try {
-                // Count down from 3, 2, 1, 0
                 while (this.countdownVal >= 0) {
-                    this.repaint(); // Force a draw to show the new number
-                    Thread.sleep(1000); // Wait exactly 1 second
+                    this.repaint();
+                    Thread.sleep(1000);
                     this.countdownVal--;
                 }
 
-                // 3. Finalize: Start the race!
                 this.isPaused = false;
                 this.isCountingDown = false;
                 this.repaint();
@@ -120,19 +155,14 @@ public class GameLauncher extends JPanel implements Runnable {
     }
 
     public void restartGame() {
-        // 1. Reset the scores in the manager
         this.scoreManager.resetScores();
 
-        // 2. Reset the clock
+        this.scoreManager.setWinLimit(this.gameSettings.getWinScore());
+
         this.gameTime = 0;
-
-        // 3. Clear all visual leftovers (sparks/text) from the previous session
         this.effectManager.clear();
-
-        // 4. Start the round (this triggers the 3-2-1 countdown thread)
         this.restartRound();
     }
-
 
     private void triggerDeathEffects() {
         this.shakeMagnitude = MyUtils.SHAKE_INITIAL_MAGNITUDE;
@@ -154,7 +184,7 @@ public class GameLauncher extends JPanel implements Runnable {
 
         // FIX: Pull scores from the Manager, not the Player objects
         MyUtils.drawScores(g2, this.getWidth(), this.getHeight(),
-                this.scoreManager.getP1Score(), this.scoreManager.getP2Score());
+                this.scoreManager.getP1Score(), this.scoreManager.getP2Score(), player1.getTransparentColor(), player2.getTransparentColor());
 
         if (this.isCountingDown) {
             MyUtils.drawCountdown(g2, this.getWidth(), this.getHeight(), this.countdownVal);
@@ -211,7 +241,7 @@ public class GameLauncher extends JPanel implements Runnable {
 
         if (this.currentState != State.PLAYING || this.isPaused || this.isDeathPause) return;
 
-        this.arenaInset += MyUtils.GAME_ARENA_INSET_SHRINK_SPEED;
+        this.arenaInset += this.gameSettings.getShrinkSpeed();
 
         this.gameTime += (1000 / this.FPS);
         this.player1.move(this.gameTime);
@@ -299,20 +329,29 @@ public class GameLauncher extends JPanel implements Runnable {
         Graphics2D g2 = (Graphics2D) g;
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
+        // 1. Handle Camera Shake
         if (this.shakeMagnitude > 0) {
             g2.translate((Math.random() * 2 - 1) * this.shakeMagnitude, (Math.random() * 2 - 1) * this.shakeMagnitude);
         }
 
-        if (this.currentState == State.MENU) {
-            MyUtils.drawMainMenu(g2, this, this.shakeMagnitude, this.logoHue);
-        } else {
-            this.drawGameLevel(g2);
+        // 2. Render based on Current State
+        switch (this.currentState) {
+            case MENU ->
+                    MyUtils.drawMainMenu(g2, this, this.shakeMagnitude, this.logoHue);
 
-            if (this.isPaused && !this.isCountingDown) {
-                MyUtils.drawPauseOverlay(g2, this.getWidth(), this.getHeight());
+            case SETUP ->
+                    this.setupManager.draw(g2, this.getWidth(), this.getHeight());
+
+            case PLAYING, WIN -> {
+                this.drawGameLevel(g2);
+                // Draw Pause Overlay if the game is paused but NOT during the countdown
+                if (this.isPaused && !this.isCountingDown) {
+                    MyUtils.drawPauseOverlay(g2, this.getWidth(), this.getHeight());
+                }
             }
         }
 
+        // 3. Always draw global effects (floating text, explosions) on top
         this.effectManager.draw(g2);
     }
 

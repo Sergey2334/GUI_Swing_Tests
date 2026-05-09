@@ -5,7 +5,7 @@ import GUI_Tests.Utilities.MyUtils;
 public class ScoreManager {
     private int player1Score = 0;
     private int player2Score = 0;
-    private final int winScore = MyUtils.PLAYER_WIN_SCORE;
+    private int winScore = MyUtils.PLAYER_WIN_SCORE_MEDIUM;
     private final String player1Name = MyUtils.PLAYER1_NAME;
     private final String player2Name = MyUtils.PLAYER2_NAME;
 
@@ -35,4 +35,5 @@ public class ScoreManager {
     // Getters for rendering
     public int getP1Score() { return this.player1Score; }
     public int getP2Score() { return this.player2Score; }
+    public void setWinLimit(int winLimit) { this.winScore = winLimit; }
 }

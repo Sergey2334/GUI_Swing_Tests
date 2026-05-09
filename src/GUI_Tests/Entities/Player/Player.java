@@ -12,7 +12,7 @@ public class Player {
     private int startDirection;
     private int moveSpeed;
     private boolean isAlive;
-    private final Color color;
+    private Color color;
 
     // 2. Modular Components
     private final PlayerTrail playerTrail;
@@ -103,6 +103,8 @@ public class Player {
         this.isAlive = false;
     }
 
+    public Color getTransparentColor() { return MyUtils.transparentColor(this.color, 150); }
+
     // --- GETTERS & SETTERS ---
 
     public double getPlayerX() { return this.playerX; }
@@ -111,4 +113,6 @@ public class Player {
     public double getLastPointX() { return this.lastPointX; }
     public double getLastPointY() { return this.lastPointY; }
     public PlayerTrail getPlayerTrail() { return this.playerTrail; }
+    public void setSpeed(int newSpeed) { this.moveSpeed = newSpeed; }
+    public void setColor(Color color) { this.color = color; }
 }
