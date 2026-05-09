@@ -4,118 +4,108 @@ import GUI_Tests.Root.GameSettings;
 import GUI_Tests.Utilities.MyUtils;
 import java.awt.*;
 
-/**
- * Handles the selection logic and rendering for the Pre-Game Setup Screen.
- * This class is decoupled from the main game loop to ensure maximum modularity.
- */
 public class SetupManager {
-    // Core settings data to be modified
     private final GameSettings settings;
+    private int currentRow = 0;
+    private int diffIndex = 1;
+    private int p1ColIndex = 0;
+    private int p2ColIndex = 3;
 
-    // UI State tracking
-    private int currentRow = 0; // 0: Difficulty, 1: P1 Color, 2: P2 Color, 3: START
-    private int diffIndex = 1;  // Default to "STANDARD" (Index 1)
-    private int p1ColIndex = 0; // Default to TRON_COLORS[0]
-    private int p2ColIndex = 3; // Default to TRON_COLORS[3]
-
-    // Difficulty labels mapped to MyUtils parameters
     private final String[] difficultyLabels = {"RELAXED", "STANDARD", "HYPER"};
 
     public SetupManager(GameSettings settings) {
         this.settings = settings;
     }
 
-    /**
-     * Navigates the selection cursor downward.
-     */
     public void moveDown() {
-        this.currentRow = (this.currentRow + 1) % 4;
+        this.currentRow = (this.currentRow + 1) % 5;
     }
 
-    /**
-     * Navigates the selection cursor upward.
-     */
     public void moveUp() {
-        this.currentRow = (this.currentRow - 1 + 4) % 4;
+        this.currentRow = (this.currentRow - 1 + 5) % 5;
     }
 
-    /**
-     * Cycles through values in the currently selected row (Left/Right).
-     * @param direction -1 for Left, 1 for Right.
-     */
     public void cycle(int direction) {
-        if (this.currentRow == 0) {
-            // Cycle Difficulty
-            this.diffIndex = (this.diffIndex + direction + this.difficultyLabels.length) % this.difficultyLabels.length;
-            this.settings.setDifficulty(this.difficultyLabels[this.diffIndex]);
-        }
-        else if (this.currentRow == 1) {
-            // Cycle Player 1 Color
-            this.p1ColIndex = (this.p1ColIndex + direction + MyUtils.TRON_COLORS.length) % MyUtils.TRON_COLORS.length;
-            this.settings.setP1Color(MyUtils.TRON_COLORS[this.p1ColIndex]);
-        }
-        else if (this.currentRow == 2) {
-            // Cycle Player 2 Color
-            this.p2ColIndex = (this.p2ColIndex + direction + MyUtils.TRON_COLORS.length) % MyUtils.TRON_COLORS.length;
-            this.settings.setP2Color(MyUtils.TRON_COLORS[this.p2ColIndex]);
+        switch (this.currentRow) {
+            case 0 -> {
+                // Difficulty Cycling
+                this.diffIndex = (this.diffIndex + direction + 3) % 3;
+                this.settings.setDifficulty(this.difficultyLabels[this.diffIndex]);
+            }
+            case 1 -> {
+                // Match Type Toggle (PvP vs PvAI)
+                this.settings.toggleAI();
+            }
+            case 2 -> {
+                // Player 1 Color Cycling
+                this.p1ColIndex = (this.p1ColIndex + direction + MyUtils.TRON_COLORS.length) % MyUtils.TRON_COLORS.length;
+                this.settings.setP1Color(MyUtils.TRON_COLORS[this.p1ColIndex]);
+            }
+            case 3 -> {
+                // Player 2 Color Cycling
+                this.p2ColIndex = (this.p2ColIndex + direction + MyUtils.TRON_COLORS.length) % MyUtils.TRON_COLORS.length;
+                this.settings.setP2Color(MyUtils.TRON_COLORS[this.p2ColIndex]);
+            }
+            case 4 -> {
+                // Row 4 is "START", no cycling needed here!
+            }
         }
     }
 
-    /**
-     * Draws the Setup terminal overlay.
-     */
     public void draw(Graphics2D g2, int width, int height) {
-        // 1. Semi-transparent dark background for the setup terminal
-        g2.setColor(new Color(0, 5, 10, 230));
+        // 1. Semi-transparent terminal background
+        g2.setColor(new Color(0, 5, 10, 235));
         g2.fillRect(0, 0, width, height);
 
-        // 2. Title Section
+        // 2. Title
         g2.setFont(new Font("Monospaced", Font.BOLD, 35));
         g2.setColor(MyUtils.COLOR_TRON1);
-        g2.drawString("> GRID_PROTOCOL_INIT", 80, 100);
+        g2.drawString("> SYSTEM_CONFIGURATION", 80, 80);
 
-        // 3. Menu Options List
+        // 3. Dynamic Menu Items
         String[] menuItems = {
                 "DIFFICULTY: < " + this.difficultyLabels[this.diffIndex] + " >",
+                "MATCH_TYPE: [ " + (this.settings.isVsAI() ? "PLAYER vs AI" : "PLAYER vs PLAYER") + " ]",
                 "P1_COLOR_SCAN: ",
                 "P2_COLOR_SCAN: ",
-                "EXECUTE_PROGRAM"
+                "EXECUTE_MATCH_START"
         };
 
-        g2.setFont(new Font("Monospaced", Font.PLAIN, 24));
+        g2.setFont(new Font("Monospaced", Font.PLAIN, 22));
         for (int i = 0; i < menuItems.length; i++) {
-            boolean isHighlighted = (i == this.currentRow);
+            boolean isSelected = (i == this.currentRow);
 
-            // Set color based on selection
-            g2.setColor(isHighlighted ? Color.WHITE : Color.DARK_GRAY);
-            String cursor = isHighlighted ? ">> " : "   ";
-            g2.drawString(cursor + menuItems[i], 110, 220 + (i * 65));
+            // Highlight selected row with White, others with Dark Gray
+            g2.setColor(isSelected ? Color.WHITE : Color.DARK_GRAY);
 
-            // Draw color preview boxes for player color rows
-            if (i == 1) this.drawPreviewBox(g2, this.settings.getP1Color(), 480, 220 + (1 * 65) - 28);
-            if (i == 2) this.drawPreviewBox(g2, this.settings.getP2Color(), 480, 220 + (2 * 65) - 28);
+            String cursor = (isSelected) ? ">> " : "   ";
+            g2.drawString(cursor + menuItems[i], 110, 180 + (i * 55));
+
+            // Draw the color preview boxes next to the text
+            if (i == 2) {
+                this.drawPreview(g2, this.settings.getP1Color(), 400, 180 + (2 * 55) - 25);
+            }
+            if (i == 3) {
+                this.drawPreview(g2, this.settings.getP2Color(), 400, 180 + (3 * 55) - 25);
+            }
         }
 
-        // 4. Instructional footer
-        g2.setFont(new Font("Monospaced", Font.ITALIC, 20));
+        // 4. Footer Help Text
+        g2.setFont(new Font("Monospaced", Font.ITALIC, 18));
         g2.setColor(Color.GRAY);
-        g2.drawString("ARROWS: NAVIGATE | LEFT/RIGHT: CHANGE | ENTER: CONFIRM | ESC: BACK", 80, height - 60);
+        g2.drawString("ARROWS: NAVIGATE | LEFT/RIGHT: CHANGE | ENTER: START | ESC: BACK", 80, height - 40);
     }
 
-    /**
-     * Helper to draw a square preview of the currently selected color.
-     */
-    private void drawPreviewBox(Graphics2D g2, Color color, int x, int y) {
-        g2.setColor(color);
-        g2.fillRect(x, y, MyUtils.PLAYER_TILE_SIZE, MyUtils.PLAYER_TILE_SIZE);
-        g2.setStroke(new BasicStroke(3));
+    private void drawPreview(Graphics2D g2, Color c, int x, int y) {
+        // Inner Color
+        g2.setColor(c);
+        g2.fillRect(x, y, 30, 30);
+        // White Border
         g2.setColor(Color.WHITE);
-        g2.drawRect(x, y, MyUtils.PLAYER_TILE_SIZE, MyUtils.PLAYER_TILE_SIZE);
+        g2.setStroke(new BasicStroke(2));
+        g2.drawRect(x, y, 30, 30);
     }
 
-    /**
-     * @return The currently hovered row index.
-     */
     public int getCurrentRow() {
         return this.currentRow;
     }

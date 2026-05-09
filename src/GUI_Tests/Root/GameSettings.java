@@ -8,11 +8,11 @@ public class GameSettings {
     private long trailLifetime = MyUtils.PLAYER_TRAIL_LIFETIME_MEDIUM;
     private double shrinkSpeed = MyUtils.GAME_ARENA_INSET_SHRINK_SPEED_MEDIUM;
     private int winScore = MyUtils.PLAYER_WIN_SCORE_MEDIUM;
+    private boolean vsAI = false; // The new AI flag
 
-    private Color p1Color = MyUtils.TRON_COLORS[0]; // Cyan
-    private Color p2Color = MyUtils.TRON_COLORS[3]; // Orange
+    private Color p1Color = MyUtils.TRON_COLORS[0];
+    private Color p2Color = MyUtils.TRON_COLORS[3];
 
-    // Getters and Setters
     public void setDifficulty(String type) {
         switch(type) {
             case "RELAXED" -> {
@@ -27,7 +27,7 @@ public class GameSettings {
                 this.shrinkSpeed = MyUtils.GAME_ARENA_INSET_SHRINK_SPEED_FAST;
                 this.winScore = MyUtils.PLAYER_WIN_SCORE_HARD;
             }
-            default -> { // STANDARD
+            default -> {
                 this.speed = MyUtils.GAME_SPEED_MEDIUM;
                 this.trailLifetime = MyUtils.PLAYER_TRAIL_LIFETIME_MEDIUM;
                 this.shrinkSpeed = MyUtils.GAME_ARENA_INSET_SHRINK_SPEED_MEDIUM;
@@ -36,6 +36,11 @@ public class GameSettings {
         }
     }
 
+    // New AI Methods
+    public boolean isVsAI() { return this.vsAI; }
+    public void toggleAI() { this.vsAI = !this.vsAI; }
+
+    // Getters and Setters
     public int getSpeed() { return this.speed; }
     public long getTrailLifetime() { return this.trailLifetime; }
     public double getShrinkSpeed() { return this.shrinkSpeed; }

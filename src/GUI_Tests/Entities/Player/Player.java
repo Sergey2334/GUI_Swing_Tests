@@ -15,6 +15,8 @@ public class Player {
     private boolean isInvincible;
     private Color color;
 
+    private boolean isAI = false;
+
     // 2. Modular Components
     private final PlayerTrail playerTrail;
 
@@ -139,4 +141,7 @@ public class Player {
     public boolean isInvincible() { return this.isInvincible; }
     public void setInvincible(boolean invincible) { this.isInvincible = invincible; }
     public void setColor(Color color) { this.color = color; }
+    public void setAI(boolean ai) { this.isAI = ai; }
+    public boolean isAI() { return this.isAI; }
+    public int getDirection() { return this.direction; }
 }

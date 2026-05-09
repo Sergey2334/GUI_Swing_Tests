@@ -83,6 +83,8 @@ public final class MyUtils {
     public static final String PLAYER1_NAME = "P1";
     public static final String PLAYER2_NAME = "P2";
 
+    public static final int SETUP_START = 4;
+
     public static final long PLAYER_TRAIL_LIFETIME_SHORT = 7 * 1000;
     public static final long PLAYER_TRAIL_LIFETIME_MEDIUM = 14 * 1000;
     public static final long PLAYER_TRAIL_LIFETIME_LONG = 25 * 1000;

@@ -2,10 +2,7 @@ package GUI_Tests.Root;
 
 import GUI_Tests.Entities.Player.Player;
 import GUI_Tests.Entities.PowerUps.PowerUp;
-import GUI_Tests.Managers.EffectManager;
-import GUI_Tests.Managers.PowerUpSpawner;
-import GUI_Tests.Managers.ScoreManager;
-import GUI_Tests.Managers.SetupManager;
+import GUI_Tests.Managers.*;
 import GUI_Tests.Utilities.MyUtils;
 
 import javax.swing.*;
@@ -26,9 +23,8 @@ public class GameLauncher extends JPanel implements Runnable {
     private final ScoreManager scoreManager = new ScoreManager();
     private GameSettings gameSettings = new GameSettings();
     private SetupManager setupManager = new SetupManager(this.gameSettings);
+    private AIManager aiManager = new AIManager(this);
     private final java.util.List<PowerUp> activePowerUps = new java.util.concurrent.CopyOnWriteArrayList<>();
-
-
 
     // 3. Game State & Visuals
     public enum State {MENU, SETUP, PLAYING, WIN}
@@ -42,6 +38,7 @@ public class GameLauncher extends JPanel implements Runnable {
     private Timer shakeTimer;
     private boolean isDeathPause = false;
     private String statusMessage = ""; // Member variable
+
 
     public GameLauncher() {
         this.initializePanel();
@@ -81,18 +78,25 @@ public class GameLauncher extends JPanel implements Runnable {
     }
 
     public void handleEnterKey() {
+        // 1. If we are on the Main Menu, go to the Setup Screen
         if (this.currentState == State.MENU) {
             this.currentState = State.SETUP;
-        } else if (this.currentState == State.SETUP) {
-            if (this.setupManager.getCurrentRow() == 3) { // START button
+        }
+        // 2. If we are on the Setup Screen, check if we are hovering over "START"
+        else if (this.currentState == State.SETUP) {
+            // We ask the SetupManager for the currentRow.
+            // Index 4 is "EXECUTE_MATCH_START"
+            if (this.setupManager.getCurrentRow() == MyUtils.SETUP_START) {
                 this.currentState = State.PLAYING;
-                this.restartGame();
+                this.restartGame(); // This will apply all your colors and difficulty!
             }
-        } else if (this.currentState == State.WIN) {
-            this.currentState = State.PLAYING;
-            this.restartGame();
+        }
+        // 3. If the game is over (Win Screen), Restart
+        else if (this.currentState == State.WIN) {
+            this.currentState = State.SETUP;
         }
     }
+
 
     public void openSetup() {
         if (this.currentState == State.MENU) {
@@ -111,7 +115,6 @@ public class GameLauncher extends JPanel implements Runnable {
     public java.util.List<PowerUp>  getActivePowerUps() {
         return this.activePowerUps;
     }
-
 
     public void backToMenu() {
         this.currentState = State.MENU;
@@ -140,6 +143,7 @@ public class GameLauncher extends JPanel implements Runnable {
         // Update Player 2
         this.player2.setColor(this.gameSettings.getP2Color());
         this.player2.setSpeed(this.gameSettings.getSpeed());
+        this.player2.setAI(this.gameSettings.isVsAI()); // If P2 is AI :D
 
         // 3. Reset Positions
         this.player1.respawn();
@@ -259,6 +263,8 @@ public class GameLauncher extends JPanel implements Runnable {
 
         this.arenaInset += this.gameSettings.getShrinkSpeed();
 
+        this.aiManager.updateAI(this.player2);
+
         this.gameTime += (1000 / this.FPS);
         this.player1.move(this.gameTime);
         this.player2.move(this.gameTime);
@@ -299,6 +305,32 @@ public class GameLauncher extends JPanel implements Runnable {
         }
 
         this.checkPowerUpCollisions();
+    }
+
+    /**
+     * Checks if a specific rectangular area on the grid contains a hazard.
+     * Used by the AI to "scan" its surroundings.
+     */
+    public boolean isPositionDangerous(java.awt.geom.Rectangle2D.Double bounds) {
+        // 1. Check for Wall Collisions (Out of Bounds)
+        if (bounds.x < this.arenaInset ||
+                bounds.x > this.getWidth() - this.arenaInset - bounds.width ||
+                bounds.y < this.arenaInset ||
+                bounds.y > this.getHeight() - this.arenaInset - bounds.height) {
+            return true;
+        }
+
+        // 2. Check for Trail Collisions
+        // We create a temporary path to represent the bot "stepping" into that area
+        java.awt.geom.Line2D.Double scanPath = new java.awt.geom.Line2D.Double(
+                bounds.x, bounds.y, bounds.x + bounds.width, bounds.y + bounds.height
+        );
+
+        // Check against P1's trail and P2's trail
+        boolean hitP1Trail = this.player1.getPlayerTrail().checkCollision(scanPath, false);
+        boolean hitP2Trail = this.player2.getPlayerTrail().checkCollision(scanPath, false);
+
+        return hitP1Trail || hitP2Trail;
     }
 
     private void checkPowerUpCollisions() {
