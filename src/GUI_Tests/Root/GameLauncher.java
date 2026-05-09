@@ -1,5 +1,8 @@
-package GUI_Tests;
+package GUI_Tests.Root;
 
+import GUI_Tests.Entities.Player.Player;
+import GUI_Tests.Managers.EffectManager;
+import GUI_Tests.Managers.ScoreManager;
 import GUI_Tests.Utilities.MyUtils;
 
 import javax.swing.*;
@@ -17,6 +20,7 @@ public class GameLauncher extends JPanel implements Runnable {
     private Player player1;
     private Player player2;
     private EffectManager effectManager;
+    private final ScoreManager scoreManager = new ScoreManager();
 
     // 3. Game State & Visuals
     private enum State {MENU, PLAYING, WIN}
@@ -116,16 +120,19 @@ public class GameLauncher extends JPanel implements Runnable {
     }
 
     public void restartGame() {
-        // 1. Reset the clock
+        // 1. Reset the scores in the manager
+        this.scoreManager.resetScores();
+
+        // 2. Reset the clock
         this.gameTime = 0;
 
-        // 2. Reset the actual score values
-        this.player1.resetScore();
-        this.player2.resetScore();
+        // 3. Clear all visual leftovers (sparks/text) from the previous session
+        this.effectManager.clear();
 
-        // 3. Start the round (this handles the countdown and respawning)
+        // 4. Start the round (this triggers the 3-2-1 countdown thread)
         this.restartRound();
     }
+
 
     private void triggerDeathEffects() {
         this.shakeMagnitude = MyUtils.SHAKE_INITIAL_MAGNITUDE;
@@ -137,35 +144,17 @@ public class GameLauncher extends JPanel implements Runnable {
         this.shakeTimer.start();
     }
 
-    private void drawVoidWalls(Graphics2D g2) {
-        MyUtils.drawVoidWalls(g2, this.getWidth(), this.getHeight(), this.arenaInset);
-    }
-
-    private void drawScores(Graphics2D g2) {
-        MyUtils.drawScores(g2, this.getWidth(), this.getHeight(),
-                this.player1.getPlayerScore(), this.player2.getPlayerScore());
-    }
-
-    private void drawCountdownText(Graphics2D g2) {
-        MyUtils.drawCountdown(g2, this.getWidth(), this.getHeight(), this.countdownVal);
-    }
-
     private void drawGameLevel(Graphics2D g2) {
-        // TEST - Draw Center Point And Grid
         MyUtils.drawGrid(g2, this);
-//        MyUtils.drawDeepGrid(g2, this.getWidth(), this.getHeight());
-        MyUtils.drawCenterPoint(g2, this);
-
         this.player1.draw(g2, this.gameTime);
         this.player2.draw(g2, this.gameTime);
         this.effectManager.draw(g2);
 
-        // Modular Void Walls
         MyUtils.drawVoidWalls(g2, this.getWidth(), this.getHeight(), this.arenaInset);
 
-        // Modular Scores
+        // FIX: Pull scores from the Manager, not the Player objects
         MyUtils.drawScores(g2, this.getWidth(), this.getHeight(),
-                this.player1.getPlayerScore(), this.player2.getPlayerScore());
+                this.scoreManager.getP1Score(), this.scoreManager.getP2Score());
 
         if (this.isCountingDown) {
             MyUtils.drawCountdown(g2, this.getWidth(), this.getHeight(), this.countdownVal);
@@ -176,11 +165,18 @@ public class GameLauncher extends JPanel implements Runnable {
         }
     }
 
+
     private void drawWinScreen(Graphics2D g2) {
-        String winner = (this.player1.getPlayerScore() >= MyUtils.PLAYER_WIN_SCORE) ? "P1" : "P2";
-        Color winColor = (this.player1.getPlayerScore() >= MyUtils.PLAYER_WIN_SCORE) ? MyUtils.COLOR_TRON1 : MyUtils.COLOR_TRON2;
+        // 1. Ask the manager for the winner's name
+        String winner = this.scoreManager.getWinnerName();
+
+        // 2. Determine color based on the winner
+        Color winColor = (winner.equals(MyUtils.PLAYER1_NAME)) ? this.player1.getColor() : this.player2.getColor();
+
+        // 3. Hand off the actual drawing to MyUtils
         MyUtils.drawWinScreen(g2, this, winner, winColor, this.logoHue);
     }
+
 
     // --- GAME LOOP ---
     @Override
@@ -258,46 +254,33 @@ public class GameLauncher extends JPanel implements Runnable {
     }
 
     private void handleDeath(boolean p1Died, boolean p2Died) {
-        this.triggerDeathEffects(); // Screen shake
-        this.isDeathPause = true;    // Freeze player movement
+        this.triggerDeathEffects();
+        this.isDeathPause = true;
 
-        double centerX = this.getWidth() / 2.0;
-        double centerY = this.getHeight() / 3.0;
-
-        // 1. Process Scoring and Text Logic
         if (p1Died && p2Died) {
-            // Mutual Destruction
-            this.player1.killPlayer();
-            this.player2.killPlayer();
-            this.effectManager.addText("MUTUAL DESTRUCTION", centerX, centerY, Color.RED, 2000);
-
-            // Both explode
+            // No one scores on mutual destruction
+            this.effectManager.addText("MUTUAL DESTRUCTION", getWidth()/2.0, getHeight()/3.0, Color.RED, 2000);
             this.effectManager.createExplosion(this.player1.getPlayerX(), this.player1.getPlayerY(), this.player1.getColor());
             this.effectManager.createExplosion(this.player2.getPlayerX(), this.player2.getPlayerY(), this.player2.getColor());
         } else {
             if (p1Died) {
-                this.player1.killPlayer();
-                this.player2.addScore();
+                this.scoreManager.addScore(2); // P2 Scores
+                this.effectManager.addText("P2 SCORES", getWidth()/2.0, getHeight()/3.0, MyUtils.COLOR_TRON2, 2000);
                 this.effectManager.createExplosion(this.player1.getPlayerX(), this.player1.getPlayerY(), this.player1.getColor());
-                this.effectManager.addText("PLAYER 2 SCORES", centerX, centerY, MyUtils.COLOR_TRON2, 2000);
-            }
-            if (p2Died) {
-                this.player2.killPlayer();
-                this.player1.addScore();
+            } else {
+                this.scoreManager.addScore(1); // P1 Scores
+                this.effectManager.addText("P1 SCORES", getWidth()/2.0, getHeight()/3.0, MyUtils.COLOR_TRON1, 2000);
                 this.effectManager.createExplosion(this.player2.getPlayerX(), this.player2.getPlayerY(), this.player2.getColor());
-                this.effectManager.addText("PLAYER 1 SCORES", centerX, centerY, MyUtils.COLOR_TRON1, 2000);
             }
         }
 
-        // 2. Wait for the visuals to finish, then decide what to do next
         new Thread(() -> {
             try {
-                Thread.sleep(2000); // Wait for the text to fade
-                this.isDeathPause = false; // Unfreeze movement
+                Thread.sleep(2000);
+                this.isDeathPause = false;
 
-                // 3. Win Check vs Round Restart
-                if (this.player1.getPlayerScore() >= MyUtils.PLAYER_WIN_SCORE ||
-                        this.player2.getPlayerScore() >= MyUtils.PLAYER_WIN_SCORE) {
+                // Check the manager for the win condition
+                if (this.scoreManager.hasWinner()) {
                     this.currentState = State.WIN;
                 } else {
                     this.restartRound();
@@ -329,6 +312,8 @@ public class GameLauncher extends JPanel implements Runnable {
                 MyUtils.drawPauseOverlay(g2, this.getWidth(), this.getHeight());
             }
         }
+
+        this.effectManager.draw(g2);
     }
 
     // --- HELPER LOGIC ---

@@ -1,6 +1,6 @@
 package GUI_Tests.MainWinodw.ClientArea;
 
-import GUI_Tests.GameLauncher;
+import GUI_Tests.Root.GameLauncher;
 import GUI_Tests.MainWinodw.ClientArea.BackgroundVisualElements.*;
 import GUI_Tests.Utilities.MyUtils;
 

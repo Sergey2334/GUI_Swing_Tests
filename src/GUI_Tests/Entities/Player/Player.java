@@ -1,4 +1,4 @@
-package GUI_Tests;
+package GUI_Tests.Entities.Player;
 
 import GUI_Tests.Utilities.MyUtils;
 import java.awt.*;
@@ -11,7 +11,6 @@ public class Player {
     private int direction;
     private int startDirection;
     private int moveSpeed;
-    private int playerScore;
     private boolean isAlive;
     private final Color color;
 
@@ -32,7 +31,6 @@ public class Player {
         this.direction = startDirection;
         this.startDirection = startDirection;
         this.moveSpeed = moveSpeed;
-        this.playerScore = 0;
         this.isAlive = true;
 
         // Initialize the modular Trail
@@ -110,10 +108,6 @@ public class Player {
     public double getPlayerX() { return this.playerX; }
     public double getPlayerY() { return this.playerY; }
     public Color getColor() { return this.color; }
-    public int getPlayerScore() { return this.playerScore; }
-    public void addScore() { this.playerScore++; }
-    public void subScore() { this.playerScore = Math.max(0, this.playerScore - 1); }
-    public void resetScore() { this.playerScore = 0; }
     public double getLastPointX() { return this.lastPointX; }
     public double getLastPointY() { return this.lastPointY; }
     public PlayerTrail getPlayerTrail() { return this.playerTrail; }

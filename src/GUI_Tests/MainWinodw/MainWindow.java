@@ -2,16 +2,14 @@ package GUI_Tests.MainWinodw;
 
 import GUI_Tests.MainWinodw.ClientArea.ClientArea;
 import GUI_Tests.MainWinodw.TitleBar.TitleBar;
-import GUI_Tests.MainWinodw.MainWindowUtilities.WindowDragger;
-import GUI_Tests.MainWinodw.MainWindowUtilities.WindowGlassResizer;
+import GUI_Tests.Utilities.MainWindowUtilities.WindowDragger;
+import GUI_Tests.Utilities.MainWindowUtilities.WindowGlassResizer;
 import GUI_Tests.Utilities.MyUtils;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowStateListener;
 
 public class MainWindow extends JFrame {
     private final String name = "Main Window";

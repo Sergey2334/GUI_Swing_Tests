@@ -3,7 +3,7 @@ package GUI_Tests.Utilities;
 import GUI_Tests.MainWinodw.TitleBar.TitleBar;
 import GUI_Tests.Utilities.DialogBox.DialogBox;
 import GUI_Tests.Utilities.DialogBox.DialogBoxOption;
-import GUI_Tests.MainWinodw.MainWindowUtilities.WindowAnimations;
+import GUI_Tests.Utilities.MainWindowUtilities.WindowAnimations;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -86,6 +86,8 @@ public final class MyUtils {
     public static final double GAME_ARENA_INSET = 0;
     public static final double GAME_ARENA_INSET_SHRINK_SPEED = 0.03;
     public static final int PLAYER_WIN_SCORE = 2;
+    public static final String PLAYER1_NAME = "P1";
+    public static final String PLAYER2_NAME = "P2";
     public static final Color[] TRON_COLORS = {
             new Color(0, 255, 255),   // Cyan
             new Color(255, 0, 255),   // Pink
