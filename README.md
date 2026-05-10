@@ -71,7 +71,7 @@ The game is split into specialized "Managers" that handle different parts of the
 This makes the game run smoothly and makes it easy to add new features!
 
 But* not gonna lie, there are a bunch of Bugs, That I wish I could fix, unfortunately I have no time :')
-There are a bunch more of cool Features that I wanted to add, for example a Setting screen for button binding and a Mute button and Much more.
+There are a bunch more of cool Features that I wanted to add, for example a Setting screen for button binding a Mute button, Splitting GameLauncher into more Managers like Collision, Paint, State Manager and much more.
 But.. it is what it is :D
 
 **Play games, make groups, meet new people, have fun and most importantly.. Enjoy :)**
