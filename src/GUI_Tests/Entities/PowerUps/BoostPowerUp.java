@@ -1,6 +1,7 @@
 package GUI_Tests.Entities.PowerUps;
 
 import GUI_Tests.Entities.Player.Player;
+import GUI_Tests.Managers.SoundManager;
 import GUI_Tests.Managers.TextureManager;
 import GUI_Tests.Utilities.MyUtils;
 
@@ -13,6 +14,8 @@ public class BoostPowerUp implements PowerUp {
     private final int size = 35;
     private final int speedModifier = MyUtils.POWER_UP_SPEED_MODIFIER;
     private final int duration = MyUtils.POWER_UP_SPEED_DURATION * 1000;
+
+    private final SoundManager soundManager = SoundManager.getInstance();
 
     public BoostPowerUp(int x, int y) {
         this.x = x;
@@ -40,6 +43,7 @@ public class BoostPowerUp implements PowerUp {
     @Override
     public void applyEffect(Player player) {
         this.collected = true;
+        this.soundManager.playRandom("boost");
         // Temporary boost logic (requires a timer or thread)
         int originalSpeed = player.getSpeed();
         player.setSpeed(originalSpeed * this.speedModifier);

@@ -26,6 +26,9 @@ public class GameLauncher extends JPanel implements Runnable {
     private AIManager aiManager = new AIManager(this);
     private final java.util.List<PowerUp> activePowerUps = new java.util.concurrent.CopyOnWriteArrayList<>();
 
+    // NEW: Accessing our Singleton SoundManager
+    private final SoundManager soundManager = SoundManager.getInstance();
+
     // 3. Game State & Visuals
     public enum State {MENU, SETUP, PLAYING, WIN}
 
@@ -37,7 +40,7 @@ public class GameLauncher extends JPanel implements Runnable {
     private int shakeMagnitude = 0;
     private Timer shakeTimer;
     private boolean isDeathPause = false;
-    private String statusMessage = ""; // Member variable
+    private String statusMessage = "";
 
 
     public GameLauncher() {
@@ -68,7 +71,7 @@ public class GameLauncher extends JPanel implements Runnable {
         this.player2 = new Player(centerX, p2Y, MyUtils.COLOR_TRON2, MyUtils.DIRECTION_UP, MyUtils.GAME_SPEED_MEDIUM);
     }
 
-    // --- INPUT API (Called by InputHandler) ---
+    // --- INPUT API ---
     public Player getPlayer1() {
         return this.player1;
     }
@@ -78,25 +81,18 @@ public class GameLauncher extends JPanel implements Runnable {
     }
 
     public void handleEnterKey() {
-        // 1. If we are on the Main Menu, go to the Setup Screen
         if (this.currentState == State.MENU) {
             this.currentState = State.SETUP;
-        }
-        // 2. If we are on the Setup Screen, check if we are hovering over "START"
-        else if (this.currentState == State.SETUP) {
-            // We ask the SetupManager for the currentRow.
-            // Index 4 is "EXECUTE_MATCH_START"
+        } else if (this.currentState == State.SETUP) {
             if (this.setupManager.getCurrentRow() == MyUtils.SETUP_START) {
                 this.currentState = State.PLAYING;
-                this.restartGame(); // This will apply all your colors and difficulty!
+                this.restartGame();
             }
-        }
-        // 3. If the game is over (Win Screen), Restart
-        else if (this.currentState == State.WIN) {
+        } else if (this.currentState == State.WIN) {
+            this.soundManager.stopAll();
             this.currentState = State.SETUP;
         }
     }
-
 
     public void openSetup() {
         if (this.currentState == State.MENU) {
@@ -112,72 +108,78 @@ public class GameLauncher extends JPanel implements Runnable {
         return this.setupManager;
     }
 
-    public java.util.List<PowerUp>  getActivePowerUps() {
+    public java.util.List<PowerUp> getActivePowerUps() {
         return this.activePowerUps;
     }
 
     public void backToMenu() {
+        if (this.currentState != State.MENU) {
+            this.soundManager.stopAll();
+        }
+        this.soundManager.loop("bg_music");
+
         this.currentState = State.MENU;
+        this.isPaused = false;
+        this.isCountingDown = false;
+        this.isDeathPause = false;
     }
 
     public void togglePause() {
-        // This flips the pause state (true to false, or false to true)
-        if (this.isCountingDown)
-        {
-            return;
-        }
+        if (this.isCountingDown) return;
         this.isPaused = !this.isPaused;
+        // Pause/Resume background music logic could go here if desired
     }
+
     private void restartRound() {
-        // 1. Initial State Setup
         this.isPaused = true;
         this.isCountingDown = true;
         this.countdownVal = MyUtils.COUNTDOWN_START_VAL;
         this.arenaInset = MyUtils.GAME_ARENA_INSET;
-        this.activePowerUps.clear(); // TEST - Make it here or at restartGame
+        this.activePowerUps.clear();
 
-        // 2. APPLY CHOSEN SETTINGS (The OOP Injection)
-        // Update Player 1
         this.player1.setColor(this.gameSettings.getP1Color());
         this.player1.setSpeed(this.gameSettings.getSpeed());
         this.player1.updateTexture();
-        // Update Player 2
         this.player2.setColor(this.gameSettings.getP2Color());
         this.player2.setSpeed(this.gameSettings.getSpeed());
         this.player2.updateTexture();
-        this.player2.setAI(this.gameSettings.isVsAI()); // If P2 is AI :D
+        this.player2.setAI(this.gameSettings.isVsAI());
 
-        // 3. Reset Positions
         this.player1.respawn();
         this.player2.respawn();
 
-        // 4. The Countdown Thread
         new Thread(() -> {
-            try {
-                while (this.countdownVal >= 0) {
+            if (this.currentState == State.PLAYING)
+            {
+                try {
+                    this.soundManager.stopAll();
+                    this.soundManager.play("countdown");
+
+                    while (this.countdownVal >= 0) {
+                        this.repaint();
+                        Thread.sleep(1000);
+                        this.countdownVal--;
+                    }
+
+                    // Start music when round actually begins
+                    this.soundManager.loop("game_music");
+
+                    this.isPaused = false;
+                    this.isCountingDown = false;
                     this.repaint();
-                    Thread.sleep(1000);
-                    this.countdownVal--;
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
                 }
-
-                this.isPaused = false;
-                this.isCountingDown = false;
-                this.repaint();
-
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
             }
         }).start();
     }
 
     public void restartGame() {
-//        this.activePowerUps.clear(); // TEST - Make it here or at restartRound
         this.scoreManager.resetScores();
-
         this.scoreManager.setWinLimit(this.gameSettings.getWinScore());
-
         this.gameTime = 0;
         this.effectManager.clear();
+        this.soundManager.stopAll();
         this.restartRound();
     }
 
@@ -191,44 +193,64 @@ public class GameLauncher extends JPanel implements Runnable {
         this.shakeTimer.start();
     }
 
-    private void drawGameLevel(Graphics2D g2) {
-        MyUtils.drawGrid(g2, this);
+    private void handleDeath(boolean p1Died, boolean p2Died) {
+        this.triggerDeathEffects();
+        this.isDeathPause = true;
 
+        this.soundManager.stopAll();
+
+        if (p1Died && p2Died) {
+            this.soundManager.play("crush_mutual");
+            this.effectManager.addText("MUTUAL DESTRUCTION", getWidth() / 2.0, getHeight() / 3.0, Color.RED, 2000);
+            this.effectManager.createExplosion(this.player1.getPlayerX(), this.player1.getPlayerY(), this.player1.getColor());
+            this.effectManager.createExplosion(this.player2.getPlayerX(), this.player2.getPlayerY(), this.player2.getColor());
+        } else {
+            this.soundManager.play("crush");
+            if (p1Died) {
+                this.scoreManager.addScore(2);
+                this.effectManager.addText("P2 SCORES", getWidth() / 2.0, getHeight() / 3.0, this.player2.getColor(), 2000);
+                this.effectManager.createExplosion(this.player1.getPlayerX(), this.player1.getPlayerY(), this.player1.getColor());
+            } else {
+                this.scoreManager.addScore(1);
+                this.effectManager.addText("P1 SCORES", getWidth() / 2.0, getHeight() / 3.0, this.player1.getColor(), 2000);
+                this.effectManager.createExplosion(this.player2.getPlayerX(), this.player2.getPlayerY(), this.player2.getColor());
+            }
+        }
+
+        new Thread(() -> {
+            try {
+                Thread.sleep(2000);
+                this.isDeathPause = false;
+                if (this.scoreManager.hasWinner()) {
+                    this.soundManager.loop("app_start");
+                    this.currentState = State.WIN;
+                } else {
+                    this.restartRound();
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }).start();
+    }
+
+    private void checkPowerUpCollisions() {
         for (PowerUp p : this.activePowerUps) {
-            p.draw(g2);
+            if (!p.isCollected()) {
+                Rectangle player1Rect = new Rectangle((int) this.player1.getPlayerX(), (int) this.player1.getPlayerY(), 20, 20);
+                Rectangle player2Rect = new Rectangle((int) this.player2.getPlayerX(), (int) this.player2.getPlayerY(), 20, 20);
+                Rectangle powerUpRect = new Rectangle(p.getX(), p.getY(), 20, 20);
+
+                if (player1Rect.intersects(powerUpRect)) {
+                    p.applyEffect(this.player1);
+                    this.effectManager.addText(p.getName(), p.getX(), p.getY(), this.player1.getColor(), 1000);
+                } else if (player2Rect.intersects(powerUpRect)) {
+                    p.applyEffect(this.player2);
+                    this.effectManager.addText(p.getName(), p.getX(), p.getY(), this.player2.getColor(), 1000);
+                }
+            }
         }
-
-        this.player1.draw(g2, this.gameTime);
-        this.player2.draw(g2, this.gameTime);
-        this.effectManager.draw(g2);
-
-        MyUtils.drawVoidWalls(g2, this.getWidth(), this.getHeight(), this.arenaInset);
-
-        // FIX: Pull scores from the Manager, not the Player objects
-        MyUtils.drawScores(g2, this.getWidth(), this.getHeight(),
-                this.scoreManager.getP1Score(), this.scoreManager.getP2Score(), player1.getTransparentColor(), player2.getTransparentColor());
-
-        if (this.isCountingDown) {
-            MyUtils.drawCountdown(g2, this.getWidth(), this.getHeight(), this.countdownVal);
-        }
-
-        if (this.currentState == State.WIN) {
-            this.drawWinScreen(g2);
-        }
+        this.activePowerUps.removeIf(PowerUp::isCollected);
     }
-
-
-    private void drawWinScreen(Graphics2D g2) {
-        // 1. Ask the manager for the winner's name
-        String winner = this.scoreManager.getWinnerName();
-
-        // 2. Determine color based on the winner
-        Color winColor = (winner.equals(MyUtils.PLAYER1_NAME)) ? this.player1.getColor() : this.player2.getColor();
-
-        // 3. Hand off the actual drawing to MyUtils
-        MyUtils.drawWinScreen(g2, this, winner, winColor, this.logoHue);
-    }
-
 
     // --- GAME LOOP ---
     @Override
@@ -243,15 +265,10 @@ public class GameLauncher extends JPanel implements Runnable {
             lastTime = currentTime;
 
             if (delta >= 1) {
-                // 1. Always update logic, regardless of visibility
                 this.update();
-
-                // 2. Only request a repaint if the window is actually showing
-                // This prevents the thread from "stacking up" paint requests while minimized
                 if (this.isShowing()) {
                     SwingUtilities.invokeLater(this::repaint);
                 }
-
                 delta--;
             }
         }
@@ -260,175 +277,95 @@ public class GameLauncher extends JPanel implements Runnable {
     private void update() {
         this.effectManager.update();
         this.logoHue = (this.logoHue + 0.005f) % 1.0f;
-
         if (this.currentState != State.PLAYING || this.isPaused || this.isDeathPause) return;
 
         this.arenaInset += this.gameSettings.getShrinkSpeed();
-
         this.aiManager.updateAI(this.player2);
-
         this.gameTime += (1000 / this.FPS);
         this.player1.move(this.gameTime);
         this.player2.move(this.gameTime);
         this.checkAllCollisions();
     }
 
-
     private void checkAllCollisions() {
         int offset = MyUtils.PLAYER_TILE_SIZE / 2;
-
-        // 1. Create movement lines (Head Paths) for both players
         java.awt.geom.Line2D.Double p1Path = new java.awt.geom.Line2D.Double(
                 this.player1.getLastPointX() + offset, this.player1.getLastPointY() + offset,
                 this.player1.getPlayerX() + offset, this.player1.getPlayerY() + offset
         );
-
         java.awt.geom.Line2D.Double p2Path = new java.awt.geom.Line2D.Double(
                 this.player2.getLastPointX() + offset, this.player2.getLastPointY() + offset,
                 this.player2.getPlayerX() + offset, this.player2.getPlayerY() + offset
         );
 
-        // 2. Check Player 1 collisions
-        boolean p1HitSelf = this.player1.getPlayerTrail().checkCollision(p1Path, true);
-        boolean p1HitP2 = this.player2.getPlayerTrail().checkCollision(p1Path, false);
-        boolean p1WallHit = this.isOutOfBounds(this.player1);
+        boolean p1Died = (this.player1.getPlayerTrail().checkCollision(p1Path, true) ||
+                this.player2.getPlayerTrail().checkCollision(p1Path, false) ||
+                this.isOutOfBounds(this.player1)) && !this.player1.isInvincible();
 
-        // 3. Check Player 2 collisions
-        boolean p2HitSelf = this.player2.getPlayerTrail().checkCollision(p2Path, true);
-        boolean p2HitP1 = this.player1.getPlayerTrail().checkCollision(p2Path, false);
-        boolean p2WallHit = this.isOutOfBounds(this.player2);
-
-        // 4. Combine results
-        boolean p1Died = (p1HitSelf || p1HitP2 || p1WallHit) && !this.player1.isInvincible();
-        boolean p2Died = (p2HitSelf || p2HitP1 || p2WallHit) && !this.player2.isInvincible();
+        boolean p2Died = (this.player2.getPlayerTrail().checkCollision(p2Path, true) ||
+                this.player1.getPlayerTrail().checkCollision(p2Path, false) ||
+                this.isOutOfBounds(this.player2)) && !this.player2.isInvincible();
 
         if (p1Died || p2Died) {
             this.handleDeath(p1Died, p2Died);
         }
-
         this.checkPowerUpCollisions();
     }
 
-    /**
-     * Checks if a specific rectangular area on the grid contains a hazard.
-     * Used by the AI to "scan" its surroundings.
-     */
     public boolean isPositionDangerous(java.awt.geom.Rectangle2D.Double bounds) {
-        // 1. Check for Wall Collisions (Out of Bounds)
         if (bounds.x < this.arenaInset ||
                 bounds.x > this.getWidth() - this.arenaInset - bounds.width ||
                 bounds.y < this.arenaInset ||
                 bounds.y > this.getHeight() - this.arenaInset - bounds.height) {
             return true;
         }
-
-        // 2. Check for Trail Collisions
-        // We create a temporary path to represent the bot "stepping" into that area
         java.awt.geom.Line2D.Double scanPath = new java.awt.geom.Line2D.Double(
                 bounds.x, bounds.y, bounds.x + bounds.width, bounds.y + bounds.height
         );
-
-        // Check against P1's trail and P2's trail
-        boolean hitP1Trail = this.player1.getPlayerTrail().checkCollision(scanPath, false);
-        boolean hitP2Trail = this.player2.getPlayerTrail().checkCollision(scanPath, false);
-
-        return hitP1Trail || hitP2Trail;
+        return this.player1.getPlayerTrail().checkCollision(scanPath, false) ||
+                this.player2.getPlayerTrail().checkCollision(scanPath, false);
     }
-
-    private void checkPowerUpCollisions() {
-        for (PowerUp p : this.activePowerUps) {
-            if (!p.isCollected()) {
-                // Simple bounding box check
-                Rectangle player1Rect = new Rectangle((int) this.player1.getPlayerX(), (int) this.player1.getPlayerY(), 20, 20);
-                Rectangle player2Rect = new Rectangle((int) this.player2.getPlayerX(), (int) this.player2.getPlayerY(), 20, 20);
-                Rectangle powerUpRect = new Rectangle(p.getX(), p.getY(), 20, 20);
-
-                if (player1Rect.intersects(powerUpRect)) {
-                    p.applyEffect(this.player1);
-                    this.effectManager.addText(p.getName(), p.getX(), p.getY(), this.player1.getColor(), 1000);
-                } else if (player2Rect.intersects(powerUpRect)) {
-                    p.applyEffect(this.player2);
-                    this.effectManager.addText(p.getName(), p.getX(), p.getY(), this.player2.getColor(), 1000);
-                }
-            }
-        }
-        // Cleanup collected power-ups
-        this.activePowerUps.removeIf(PowerUp::isCollected);
-    }
-
-    private void handleDeath(boolean p1Died, boolean p2Died) {
-        this.triggerDeathEffects();
-        this.isDeathPause = true;
-
-        if (p1Died && p2Died) {
-            // No one scores on mutual destruction
-            this.effectManager.addText("MUTUAL DESTRUCTION", getWidth()/2.0, getHeight()/3.0, Color.RED, 2000);
-            this.effectManager.createExplosion(this.player1.getPlayerX(), this.player1.getPlayerY(), this.player1.getColor());
-            this.effectManager.createExplosion(this.player2.getPlayerX(), this.player2.getPlayerY(), this.player2.getColor());
-        } else {
-            if (p1Died) {
-                this.scoreManager.addScore(2); // P2 Scores
-                this.effectManager.addText("P2 SCORES", getWidth()/2.0, getHeight()/3.0, this.player2.getColor(), 2000);
-                this.effectManager.createExplosion(this.player1.getPlayerX(), this.player1.getPlayerY(), this.player1.getColor());
-            } else {
-                this.scoreManager.addScore(1); // P1 Scores
-                this.effectManager.addText("P1 SCORES", getWidth()/2.0, getHeight()/3.0, this.player1.getColor(), 2000);
-                this.effectManager.createExplosion(this.player2.getPlayerX(), this.player2.getPlayerY(), this.player2.getColor());
-            }
-        }
-
-        new Thread(() -> {
-            try {
-                Thread.sleep(2000);
-                this.isDeathPause = false;
-
-                // Check the manager for the win condition
-                if (this.scoreManager.hasWinner()) {
-                    this.currentState = State.WIN;
-                } else {
-                    this.restartRound();
-                }
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        }).start();
-    }
-
-    // --- RENDERING ---
 
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g;
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-        // 1. Handle Camera Shake
         if (this.shakeMagnitude > 0) {
             g2.translate((Math.random() * 2 - 1) * this.shakeMagnitude, (Math.random() * 2 - 1) * this.shakeMagnitude);
         }
-
-        // 2. Render based on Current State
         switch (this.currentState) {
-            case MENU ->
-                    MyUtils.drawMainMenu(g2, this, this.shakeMagnitude, this.logoHue);
-
-            case SETUP ->
-                    this.setupManager.draw(g2, this.getWidth(), this.getHeight());
-
+            case MENU -> MyUtils.drawMainMenu(g2, this, this.shakeMagnitude, this.logoHue);
+            case SETUP -> this.setupManager.draw(g2, this.getWidth(), this.getHeight());
             case PLAYING, WIN -> {
                 this.drawGameLevel(g2);
-                // Draw Pause Overlay if the game is paused but NOT during the countdown
                 if (this.isPaused && !this.isCountingDown) {
                     MyUtils.drawPauseOverlay(g2, this.getWidth(), this.getHeight());
                 }
             }
         }
-
-        // 3. Always draw global effects (floating text, explosions) on top
         this.effectManager.draw(g2);
     }
 
-    // --- HELPER LOGIC ---
+    private void drawGameLevel(Graphics2D g2) {
+        MyUtils.drawGrid(g2, this);
+        for (PowerUp p : this.activePowerUps) p.draw(g2);
+        this.player1.draw(g2, this.gameTime);
+        this.player2.draw(g2, this.gameTime);
+        this.effectManager.draw(g2);
+        MyUtils.drawVoidWalls(g2, this.getWidth(), this.getHeight(), this.arenaInset);
+        MyUtils.drawScores(g2, this.getWidth(), this.getHeight(),
+                this.scoreManager.getP1Score(), this.scoreManager.getP2Score(),
+                this.player1.getTransparentColor(), this.player2.getTransparentColor());
+        if (this.isCountingDown) MyUtils.drawCountdown(g2, this.getWidth(), this.getHeight(), this.countdownVal);
+        if (this.currentState == State.WIN) this.drawWinScreen(g2);
+    }
+
+    private void drawWinScreen(Graphics2D g2) {
+        String winner = this.scoreManager.getWinnerName();
+        Color winColor = (winner.equals(MyUtils.PLAYER1_NAME)) ? this.player1.getColor() : this.player2.getColor();
+        MyUtils.drawWinScreen(g2, this, winner, winColor, this.logoHue);
+    }
 
     private boolean isOutOfBounds(Player p) {
         return p.getPlayerX() < this.arenaInset ||
@@ -447,5 +384,6 @@ public class GameLauncher extends JPanel implements Runnable {
         this.gameThread = new Thread(this);
         new Thread(new PowerUpSpawner(this)).start();
         this.gameThread.start();
+        this.soundManager.loop("app_start");
     }
 }

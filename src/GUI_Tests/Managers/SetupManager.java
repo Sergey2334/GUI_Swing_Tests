@@ -13,19 +13,24 @@ public class SetupManager {
 
     private final String[] difficultyLabels = {"RELAXED", "STANDARD", "HYPER"};
 
+    private final SoundManager soundManager = SoundManager.getInstance();
+
     public SetupManager(GameSettings settings) {
         this.settings = settings;
     }
 
     public void moveDown() {
+        this.soundManager.play("menu_turn");
         this.currentRow = (this.currentRow + 1) % 5;
     }
 
     public void moveUp() {
+        this.soundManager.play("menu_turn");
         this.currentRow = (this.currentRow - 1 + 5) % 5;
     }
 
     public void cycle(int direction) {
+        this.soundManager.play("menu_option");
         switch (this.currentRow) {
             case 0 -> {
                 // Difficulty Cycling

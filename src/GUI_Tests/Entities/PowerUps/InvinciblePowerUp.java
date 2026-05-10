@@ -1,6 +1,7 @@
 package GUI_Tests.Entities.PowerUps;
 
 import GUI_Tests.Entities.Player.Player;
+import GUI_Tests.Managers.SoundManager;
 import GUI_Tests.Managers.TextureManager;
 import GUI_Tests.Utilities.MyUtils;
 
@@ -11,6 +12,8 @@ public class InvinciblePowerUp implements PowerUp {
     private int x, y;
     private boolean collected = false;
     private final int size = 35;
+
+    private final SoundManager soundManager = SoundManager.getInstance();
 
     public InvinciblePowerUp(int x, int y) {
         this.x = x;
@@ -37,6 +40,7 @@ public class InvinciblePowerUp implements PowerUp {
     @Override
     public void applyEffect(Player player) {
         this.collected = true;
+        this.soundManager.playRandom("invincibility");
         player.setInvincible(true);
 
         new Thread(() -> {
